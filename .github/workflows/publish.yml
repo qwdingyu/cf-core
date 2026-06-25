@@ -58,11 +58,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
-      # 用 corepack 提供 pnpm；设置 COREPACK_ENABLE_STRICT=0 兼容旧版 Node
-      - name: Enable corepack
+      # 显式启用 corepack，并全局暴露 pnpm，避免 shim/PATH 问题
+      - name: Enable pnpm via corepack
         run: |
           corepack enable
           COREPACK_ENABLE_STRICT=0 corepack prepare pnpm@11.5.2 --activate
+          echo "$(npm root -g)/.bin" >> "$GITHUB_PATH"
+          npm install -g pnpm@11.5.2
 
       - name: Verify tools
         run: |
