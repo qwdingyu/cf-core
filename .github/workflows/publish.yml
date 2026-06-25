@@ -61,12 +61,24 @@ jobs:
         run: |
           node --version
           npm --version
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref_name }}"
 
       # 直接使用 npm 安装依赖，避免 pnpm 在 CI 中的各种兼容问题
       - name: Install dependencies
         run: |
           unset NPM_CONFIG_USERCONFIG
           npm install
+
+      - name: Verify package.json
+        run: |
+          echo "📦 Package info:"
+          node -e "const p = require('./package.json'); console.log('  name:', p.name); console.log('  version:', p.version); console.log('  private:', p.private);"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "  mode: manual (dry-run=${{ inputs.dry_run }})"
+          else
+            echo "  mode: auto (tag=${{ github.ref_name }})"
+          fi
 
       - name: Type check
         run: npm run type-check
@@ -78,24 +90,51 @@ jobs:
         run: npm run build
 
       - name: Publish to npm
+        id: publish
+        continue-on-error: true
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ inputs.dry_run }}" = "true" ]; then
               echo "🧪 Dry-run 模式..."
-              npx publish-toolkit publish --dry-run --registry=https://registry.npmjs.org/
+              npx publish-toolkit publish --dry-run --registry=https://registry.npmjs.org/ --verbose
+              echo "dry_run=true" >> $GITHUB_OUTPUT
             else
               echo "🚀 手动触发正式发布..."
-              npx publish-toolkit publish --registry=https://registry.npmjs.org/
+              npx publish-toolkit publish --registry=https://registry.npmjs.org/ --verbose
+              echo "dry_run=false" >> $GITHUB_OUTPUT
             fi
           else
             echo "🚀 Tag 触发自动发布: ${{ github.ref_name }}"
-            npx publish-toolkit publish --registry=https://registry.npmjs.org/
+            npx publish-toolkit publish --registry=https://registry.npmjs.org/ --verbose
+            echo "dry_run=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Display publish result
-        if: success()
+        if: always()
         run: |
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          echo "✅ ${PACKAGE_NAME}@${PACKAGE_VERSION} 发布成功！"
-          echo "   查看: https://www.npmjs.com/package/${PACKAGE_NAME}"
+          
+          if [ "${{ steps.publish.outcome }}" = "success" ]; then
+            if [ "${{ steps.publish.output.dry_run }}" = "true" ]; then
+              echo "🧪 Dry-run 成功！"
+              echo "   包: ${PACKAGE_NAME}@${PACKAGE_VERSION}"
+              echo "   查看: https://www.npmjs.com/package/${PACKAGE_NAME}"
+            else
+              echo "✅ ${PACKAGE_NAME}@${PACKAGE_VERSION} 发布成功！"
+              echo "   查看: https://www.npmjs.com/package/${PACKAGE_NAME}"
+            fi
+          else
+            echo "❌ 发布失败，请检查上方日志"
+            exit 1
+          fi
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ Workflow 失败"
+          echo "请检查以下步骤的日志："
+          echo "  - Type check"
+          echo "  - Run tests"
+          echo "  - Build"
+          echo "  - Publish to npm"

@@ -53,13 +53,13 @@ export interface PublishResult {
 
 // ===== 工具函数 =====
 
-function run(cmd: string, cwd: string, opts?: { verbose?: boolean }) {
-  const options = { cwd, encoding: "utf-8" as const, ...opts };
+function run(cmd: string, cwd: string, opts?: { verbose?: boolean; timeout?: number }) {
+  const options = { cwd, encoding: "utf-8" as const, timeout: 30_000, ...opts };
   if (opts?.verbose) console.log(`  $ ${cmd}`);
   try {
     const stdout = execSync(cmd, { ...options, stdio: "pipe" });
     const out = (stdout || "").toString().trim();
-    if (opts?.verbose && out) console.log(`  => ${out.slice(0, 500)}`);
+    if (opts?.verbose && out) console.log(`  => ${out}`);
     return out;
   } catch (err) {
     const stderr = ((err as Error & { stderr?: Buffer; stdout?: Buffer }).stderr ||
@@ -121,6 +121,20 @@ export class PublishToolkit {
     const opts = this.options;
     const pkgDir = resolve(opts.packageDir);
 
+    const startedAt = Date.now();
+    const stepTimings: { step: string; ms: number }[] = [];
+
+    const startStep = (name: string, extra?: string) => {
+      const t = Date.now();
+      return { done: (more?: string) => {
+        const ms = Date.now() - t;
+        stepTimings.push({ step: name, ms });
+        const info = more || extra;
+        if (info) log(`  ✓ ${name} 完成（${ms}ms） — ${info}`);
+        else log(`  ✓ ${name} 完成（${ms}ms）`);
+      }};
+    };
+
     console.log("=".repeat(50));
     console.log("  @usethink/publish-toolkit — 发布");
     console.log("=".repeat(50));
@@ -157,6 +171,7 @@ export class PublishToolkit {
     log(`  包名: ${pkgName}`);
     log(`  版本: ${pkgVersion}`);
     log(`  registry: ${opts.registry}`);
+    const step1 = startStep("验证参数");
 
     // ---- Step 2: git 检查 ----
     if (!opts.skipGitCheck) {
@@ -170,7 +185,10 @@ export class PublishToolkit {
           return this.fail(pkgName, pkgVersion, "工作区有未提交的变更");
         }
       }
-      log("  ✓ git 干净");
+      const step2 = startStep("git 检查");
+      if (opts.verbose) log(`  git root: ${gitRoot || "(非 git 仓库，已跳过)"}`);
+    } else {
+      warn("Step 2: 已跳过 git 检查（--no-git-check）");
     }
 
     // ---- Step 3: 版本检查 ----
@@ -185,16 +203,21 @@ export class PublishToolkit {
         error(`版本 ${pkgVersion} 已存在！请先 bump 版本号`);
         return this.fail(pkgName, pkgVersion, "版本已存在");
       }
-      log(`  ✓ ${latestVer ? `最新: ${latestVer}，${pkgVersion} 未发布` : "首次发布"}`);
+      const step3 = startStep("版本检查", latestVer ? `registry 最新: ${latestVer}` : "首次发布");
+      if (opts.verbose) log(`  npm view 输出: ${published || "(空)"}`);
+    } else {
+      warn("Step 3: 已跳过版本检查（--no-version-check）");
     }
 
     // ---- Step 4: 构建 ----
     log("Step 4: 构建");
     if (pkg.scripts?.prepack) {
       log("  prepack 脚本已定义（npm publish 自动执行），跳过手动构建");
+      const step4 = startStep("构建", "prepack 已定义");
     } else if (pkg.scripts?.build) {
+      if (opts.verbose) log(`  执行构建: pnpm run build || npm run build`);
       run("pnpm run build || npm run build", pkgDir, { verbose: opts.verbose });
-      log("  ✓ 构建完成");
+      const step4 = startStep("构建");
     } else {
       warn("  无 build 脚本，跳过构建");
     }
@@ -212,7 +235,8 @@ export class PublishToolkit {
       ].join("\n") + "\n",
       "utf-8"
     );
-    log("  ✓ 临时 .npmrc");
+    const step5 = startStep(".npmrc 配置");
+    if (opts.verbose) log(`  写入: ${rcPath}`);
 
     // 注册清理钩子
     process.on("exit", cleanupNpmrc);
@@ -232,31 +256,55 @@ export class PublishToolkit {
     if (opts.dryRun) pubArgs.push("--dry-run");
     if (opts.otp) pubArgs.push(`--otp=${opts.otp}`);
 
-    log(`  执行: ${npmBin} ${pubArgs.join(" ")}`);
+    if (opts.dryRun) {
+      log(`  [dry-run] 将执行: ${npmBin} ${pubArgs.join(" ")}`);
+      log(`  [dry-run] 包名: ${pkgName}`);
+      log(`  [dry-run] 版本: ${pkgVersion}`);
+      log(`  [dry-run] registry: ${opts.registry}`);
+      log(`  [dry-run] tag: ${opts.tag}`);
+      log(`  [dry-run] access: ${opts.access}`);
+      log(`  [dry-run] cwd: ${pkgDir}`);
+      log(`  [dry-run] 注：不会实际发布，也不会写入 .npmrc`);
+    } else {
+      log(`  执行: ${npmBin} ${pubArgs.join(" ")}`);
+    }
 
-    try {
-      run(`${npmBin} ${pubArgs.join(" ")}`, pkgDir, { verbose: opts.verbose });
-      if (opts.dryRun) {
-        log("  ✓ Dry-run 成功！");
-      } else {
+    if (!opts.dryRun) {
+      try {
+        run(`${npmBin} ${pubArgs.join(" ")}`, pkgDir, { verbose: opts.verbose });
         log(`  ✓ 发布成功！${pkgName}@${pkgVersion}`);
         console.log(`     https://www.npmjs.com/package/${pkgName}`);
+      } catch (err) {
+        const msg = (err as Error).message || "";
+        error(`发布失败: ${msg}`);
+        if (msg.includes("404")) error("  提示: 404 → scoped 包需要 --access public");
+        if (msg.includes("403")) error("  提示: 403 → 权限不足，检查 NPM_TOKEN");
+        if (msg.includes("401")) error("  提示: 401 → 认证失败，检查 NPM_TOKEN");
+        if (msg.includes("EOTP")) error("  提示: 需要 OTP → 使用 --otp <code>");
+        return this.fail(pkgName, pkgVersion, `发布失败: ${msg}`);
       }
-    } catch (err) {
-      const msg = (err as Error).message || "";
-      error(`发布失败: ${msg}`);
-      if (msg.includes("404")) error("  提示: 404 → scoped 包需要 --access public");
-      if (msg.includes("403")) error("  提示: 403 → 权限不足，检查 NPM_TOKEN");
-      if (msg.includes("401")) error("  提示: 401 → 认证失败，检查 NPM_TOKEN");
-      if (msg.includes("EOTP")) error("  提示: 需要 OTP → 使用 --otp <code>");
-      return this.fail(pkgName, pkgVersion, `发布失败: ${msg}`);
     }
 
     // ---- 完成 ----
     console.log();
     console.log("=".repeat(50));
-    log(opts.dryRun ? "Dry-run 完成" : `🎉 发布完成: ${pkgName}@${pkgVersion}`);
+    const totalMs = Date.now() - startedAt;
+    if (opts.dryRun) {
+      log(`Dry-run 完成（${totalMs}ms）`);
+      log(`  即将发布: ${pkgName}@${pkgVersion}`);
+      log(`  目标: ${opts.registry}`);
+      log(`  tag: ${opts.tag}`);
+    } else {
+      log(`🎉 发布完成: ${pkgName}@${pkgVersion}（${totalMs}ms）`);
+    }
     console.log("=".repeat(50));
+    if (opts.verbose) {
+      console.log();
+      console.log("步骤耗时:");
+      stepTimings.forEach((s) => {
+        console.log(`  - ${s.step}: ${s.ms}ms`);
+      });
+    }
 
     return {
       success: true,

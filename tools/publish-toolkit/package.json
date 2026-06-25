@@ -1,6 +1,6 @@
 {
   "name": "@usethink/publish-toolkit",
-  "version": "0.1.1",
+  "version": "0.1.5",
   "description": "统一 npm 包发布工具链 — 混淆构建、包准备、一键发布",
   "type": "module",
   "main": "dist/index.js",
