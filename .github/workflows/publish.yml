@@ -58,11 +58,11 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
-      # 兼容旧版 Node，并确保 corepack 能为 pnpm 创建 shim
+      # 用 corepack 提供 pnpm；设置 COREPACK_ENABLE_STRICT=0 兼容旧版 Node
       - name: Enable corepack
         run: |
           corepack enable
-          corepack prepare pnpm@11.5.2 --activate
+          COREPACK_ENABLE_STRICT=0 corepack prepare pnpm@11.5.2 --activate
 
       - name: Verify tools
         run: |
