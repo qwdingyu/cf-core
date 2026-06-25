@@ -11,9 +11,9 @@
  */
 
 import type { Context, Next } from "hono";
-import { fail } from "../http";
-import { sha256 } from "../security";
-import { apiKeys } from "../db/schema";
+import { fail } from "../http.js";
+import { sha256 } from "../security.js";
+import { apiKeys } from "../db/schema.js";
 import { eq, and, sql } from "drizzle-orm";
 
 export interface ApiKeyContext {

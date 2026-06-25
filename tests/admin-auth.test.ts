@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { Hono } from "hono";
-import { createAdminAuth } from "../src/middleware/admin-auth";
+import { createAdminAuth } from "../src/middleware/admin-auth.js";
 
 // ── 辅助：创建带 admin-auth 中间件的 Hono 应用 ──
 function createApp(mode?: "bearer" | "header" | "both") {

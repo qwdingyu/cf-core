@@ -14,8 +14,8 @@ import type {
   QueryStatusResult,
   PaymentProvider,
   ProviderFactory,
-} from "../types";
-import { fetchWithRetry } from "../fetch-utils";
+} from "../types.js";
+import { fetchWithRetry } from "../fetch-utils.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // RSA2 签名工具（Web Crypto API，零依赖）

@@ -12,7 +12,7 @@
  */
 
 // ── HTTP 工具 ──
-export { ok, fail, failRateLimit, getOrigin, safeJsonBody, maskContact, normalizeCode, csvEscape, toCsv } from "./http";
+export { ok, fail, failRateLimit, getOrigin, safeJsonBody, maskContact, normalizeCode, csvEscape, toCsv } from "./http.js";
 
 // ── 安全工具 ──
 export {
@@ -24,34 +24,34 @@ export {
   verifyTurnstile,
   buildSecurityHeaders,
   type SecurityHeadersOptions,
-} from "./security";
+} from "./security.js";
 
 // ── 缓存 ──
-export { createCache, cache } from "./cache";
+export { createCache, cache } from "./cache.js";
 
 // ── 限流 ──
-export { MemoryRateLimiter, KvRateLimiter, DbRateLimiter, type RateLimiter } from "./rate-limit";
+export { MemoryRateLimiter, KvRateLimiter, DbRateLimiter, type RateLimiter } from "./rate-limit.js";
 
 // ── 幂等性 ──
-export { checkIdempotency, saveIdempotentResponse, getIdempotentResponse } from "./idempotency";
+export { checkIdempotency, saveIdempotentResponse, getIdempotentResponse } from "./idempotency.js";
 
 // ── 审计日志 ──
-export { writeAdminAudit, type AuditInput } from "./audit";
+export { writeAdminAudit, type AuditInput } from "./audit.js";
 
 // ── 系统配置 ──
-export { SystemConfig, type SystemConfigOptions } from "./config";
+export { SystemConfig, type SystemConfigOptions } from "./config.js";
 
 // ── 错误处理 ──
-export { classifyError, retryWithBackoff, ErrorType, type RetryOptions } from "./error";
+export { classifyError, retryWithBackoff, ErrorType, type RetryOptions } from "./error.js";
 
 // ── 结构化日志 ──
-export { logger, type LogLevel, type LogEntry } from "./logger";
+export { logger, type LogLevel, type LogEntry } from "./logger.js";
 
 // ── 加解密 ──
-export { encrypt, decrypt, isEncryptionAvailable, generateUUID } from "./crypto";
+export { encrypt, decrypt, isEncryptionAvailable, generateUUID } from "./crypto.js";
 
 // ── 数据库 ──
-export { initDatabase, initDatabaseWithHealthCheck, getOrCreateClient, createDrizzle, type DrizzleInstance } from "./db/connection";
+export { initDatabase, initDatabaseWithHealthCheck, getOrCreateClient, createDrizzle, type DrizzleInstance } from "./db/connection.js";
 
 // ── 公共 Schema ──
 export {
@@ -60,18 +60,18 @@ export {
   rateLimitWindows,
   idempotencyKeys,
   apiKeys,
-} from "./db/schema";
+} from "./db/schema.js";
 
 // ── 认证 ──
-export { signJwt, verifyJwt, extractJwt, type JwtPayload } from "./auth/jwt";
-export { hashPassword, verifyPassword } from "./auth/password";
+export { signJwt, verifyJwt, extractJwt, type JwtPayload } from "./auth/jwt.js";
+export { hashPassword, verifyPassword } from "./auth/password.js";
 
 // ── 中间件 ──
-export { createAdminAuth, type AdminAuthOptions } from "./middleware/admin-auth";
-export { createApiKeyAuth, extractApiKey, type ApiKeyAuthOptions, type ApiKeyContext } from "./middleware/api-key-auth";
+export { createAdminAuth, type AdminAuthOptions } from "./middleware/admin-auth.js";
+export { createApiKeyAuth, extractApiKey, type ApiKeyAuthOptions, type ApiKeyContext } from "./middleware/api-key-auth.js";
 
 // ── Bootstrap ──
-export { bootstrap, type BootstrapOptions } from "./bootstrap";
+export { bootstrap, type BootstrapOptions } from "./bootstrap.js";
 
 // ── 类型 ──
 export type {
@@ -82,4 +82,4 @@ export type {
   FailResponse,
   TurnstileResult,
   RateLimitResult,
-} from "./types";
+} from "./types.js";

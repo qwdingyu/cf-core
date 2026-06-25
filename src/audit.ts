@@ -8,7 +8,7 @@
  * 来源：eshop/vcode audit-service.ts 合并
  */
 
-import { adminAuditLogs } from "./db/schema";
+import { adminAuditLogs } from "./db/schema.js";
 
 /**
  * 通用 Drizzle 数据库接口（仅约束审计模块需要的方法）

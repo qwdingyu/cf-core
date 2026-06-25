@@ -12,9 +12,9 @@
  */
 
 import { Hono } from "hono";
-import { initDatabaseWithHealthCheck, type DrizzleInstance } from "./db/connection";
-import { fail } from "./http";
-import { buildSecurityHeaders, type SecurityHeadersOptions } from "./security";
+import { initDatabaseWithHealthCheck, type DrizzleInstance } from "./db/connection.js";
+import { fail } from "./http.js";
+import { buildSecurityHeaders, type SecurityHeadersOptions } from "./security.js";
 
 export interface BootstrapOptions<TSchema extends Record<string, unknown> = Record<string, never>> {
   /** Drizzle schema（传入后支持关系查询） */
@@ -86,7 +86,7 @@ export interface BootstrapOptions<TSchema extends Record<string, unknown> = Reco
  *
  * @example
  * ```ts
- * import * as schema from "./db/schema";
+ * import * as schema from "./db/schema.js";
  * import { bootstrap } from "@usethink/cf-core/bootstrap";
  *
  * export default bootstrap({

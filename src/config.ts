@@ -10,7 +10,7 @@
  */
 
 import { eq } from "drizzle-orm";
-import { systemConfig } from "./db/schema";
+import { systemConfig } from "./db/schema.js";
 
 interface ConfigDbLike {
   select: (cols: { value: typeof systemConfig.value }) => {

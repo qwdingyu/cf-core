@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { encrypt, decrypt, generateUUID, isEncryptionAvailable } from "../src/crypto";
+import { encrypt, decrypt, generateUUID, isEncryptionAvailable } from "../src/crypto.js";
 
 describe("AES-256-GCM", () => {
   // 64 字符 hex = 32 字节 = 256 bit

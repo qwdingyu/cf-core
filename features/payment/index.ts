@@ -22,18 +22,18 @@ export type {
   PaymentProvider,
   ProviderRegistry,
   ProviderFactory,
-} from "./types";
+} from "./types.js";
 
 // ── 注册表 ──
-export { createProviderRegistry } from "./registry";
-export type { DbProviderConfig, DbProviderConfigMap } from "./registry";
+export { createProviderRegistry } from "./registry.js";
+export type { DbProviderConfig, DbProviderConfigMap } from "./registry.js";
 
 // ── 支付宝 ──
-export { AlipayProvider, alipayFactory, signRSA2, verifyRSA2 } from "./providers/alipay";
-export type { AlipayConfig } from "./providers/alipay";
+export { AlipayProvider, alipayFactory, signRSA2, verifyRSA2 } from "./providers/alipay.js";
+export type { AlipayConfig } from "./providers/alipay.js";
 
 // ── Stripe ──
-export { StripeProvider, stripeFactory } from "./providers/stripe";
+export { StripeProvider, stripeFactory } from "./providers/stripe.js";
 
 // ── USDT/TRC20 ──
-export { Trc20Provider, trc20Factory } from "./providers/trc20";
+export { Trc20Provider, trc20Factory } from "./providers/trc20.js";

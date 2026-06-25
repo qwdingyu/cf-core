@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { bootstrap } from "../src/bootstrap";
+import { bootstrap } from "../src/bootstrap.js";
 
 // ── Mock DB 连接 ──
 vi.mock("../src/db/connection", () => ({
@@ -229,7 +229,7 @@ describe("安全响应头", () => {
 // ═══════════════════════════════════════════════════════════════
 describe("DB 初始化失败降级", () => {
   it("非 health 请求 → 503", async () => {
-    const { initDatabaseWithHealthCheck } = await import("../src/db/connection");
+    const { initDatabaseWithHealthCheck } = await import("../src/db/connection.js");
     vi.mocked(initDatabaseWithHealthCheck).mockRejectedValueOnce(new Error("DB down"));
 
     const app = createApp();
@@ -241,7 +241,7 @@ describe("DB 初始化失败降级", () => {
   });
 
   it("health 请求 → 降级通过（db=undefined）", async () => {
-    const { initDatabaseWithHealthCheck } = await import("../src/db/connection");
+    const { initDatabaseWithHealthCheck } = await import("../src/db/connection.js");
     vi.mocked(initDatabaseWithHealthCheck).mockRejectedValueOnce(new Error("DB down"));
 
     const app = bootstrap({

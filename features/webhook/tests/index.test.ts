@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { WebhookService } from "../index";
+import { WebhookService } from "../index.js";
 
 describe("WebhookService", () => {
   it("无 URL 时不发送", async () => {

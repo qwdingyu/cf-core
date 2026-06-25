@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { classifyError, retryWithBackoff, ErrorType } from "../src/error";
+import { classifyError, retryWithBackoff, ErrorType } from "../src/error.js";
 
 describe("classifyError", () => {
   it("限流错误", () => {

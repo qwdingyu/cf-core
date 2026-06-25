@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sha256, constantTimeEqual, getBearerToken } from "../src/security";
+import { sha256, constantTimeEqual, getBearerToken } from "../src/security.js";
 
 describe("sha256", () => {
   it("空字符串", async () => {

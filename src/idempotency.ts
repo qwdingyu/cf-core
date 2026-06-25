@@ -12,7 +12,7 @@
  * 来源：eshop src/lib/idempotency.ts（三项目中唯一实现）
  */
 
-import { idempotencyKeys } from "./db/schema";
+import { idempotencyKeys } from "./db/schema.js";
 import { eq, and, sql } from "drizzle-orm";
 
 const PENDING_SENTINEL = "__pending__";

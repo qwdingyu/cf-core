@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { AntiAbuseService } from "../index";
+import { AntiAbuseService } from "../index.js";
 
 describe("AntiAbuseService", () => {
   it("正常访问无异常", () => {

@@ -11,7 +11,7 @@
  */
 
 import type { Context } from "hono";
-import type { TurnstileResult } from "./types";
+import type { TurnstileResult } from "./types.js";
 
 const encoder = new TextEncoder();
 

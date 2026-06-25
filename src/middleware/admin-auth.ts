@@ -14,8 +14,8 @@
  */
 
 import type { Context, Next } from "hono";
-import { fail } from "../http";
-import { constantTimeEqual, getBearerToken } from "../security";
+import { fail } from "../http.js";
+import { constantTimeEqual, getBearerToken } from "../security.js";
 
 export interface AdminAuthOptions {
   /**

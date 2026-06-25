@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { ThompsonRouter, wilsonScore } from "../index";
-import type { ChannelCandidate } from "../index";
+import { ThompsonRouter, wilsonScore } from "../index.js";
+import type { ChannelCandidate } from "../index.js";
 
 describe("ThompsonRouter", () => {
   const candidates: ChannelCandidate[] = [

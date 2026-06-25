@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { MemoryRateLimiter } from "../src/rate-limit";
+import { MemoryRateLimiter } from "../src/rate-limit.js";
 
 describe("MemoryRateLimiter", () => {
   it("未超限时允许", async () => {

@@ -18,7 +18,7 @@
  * ```
  */
 
-import type { PaymentProvider, ProviderFactory, ProviderRegistry } from "./types";
+import type { PaymentProvider, ProviderFactory, ProviderRegistry } from "./types.js";
 
 /** DB 加密支付配置的扁平键值对结构 */
 export interface DbProviderConfig {

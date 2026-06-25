@@ -9,7 +9,7 @@
 
 import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
-import type { RateLimitResult } from "./types";
+import type { RateLimitResult } from "./types.js";
 
 /**
  * 成功响应 — 统一格式 { ok: true, ...data }

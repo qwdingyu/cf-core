@@ -10,7 +10,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import type { RateLimitResult } from "./types";
+import type { RateLimitResult } from "./types.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 统一接口

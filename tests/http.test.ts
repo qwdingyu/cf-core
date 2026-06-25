@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { maskContact, normalizeCode, csvEscape, toCsv } from "../src/http";
+import { maskContact, normalizeCode, csvEscape, toCsv } from "../src/http.js";
 
 describe("maskContact", () => {
   it("邮箱脱敏", () => {

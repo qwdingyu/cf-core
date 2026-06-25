@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { signJwt, verifyJwt, extractJwt } from "../src/auth/jwt";
-import { hashPassword, verifyPassword } from "../src/auth/password";
+import { signJwt, verifyJwt, extractJwt } from "../src/auth/jwt.js";
+import { hashPassword, verifyPassword } from "../src/auth/password.js";
 
 describe("JWT", () => {
   const secret = "test-secret-key-must-be-at-least-32-chars-long";

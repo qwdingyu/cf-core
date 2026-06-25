@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { detectPlatform } from "../index";
+import { detectPlatform } from "../index.js";
 
 describe("detectPlatform", () => {
   it("非浏览器环境返回 h5-desktop", () => {

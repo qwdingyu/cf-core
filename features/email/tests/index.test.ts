@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { escapeHtml, interpolate } from "../index";
+import { escapeHtml, interpolate } from "../index.js";
 
 describe("escapeHtml", () => {
   it("转义特殊字符", () => {
