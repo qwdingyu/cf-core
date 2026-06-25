@@ -56,48 +56,41 @@ jobs:
         with:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
-          cache: 'pnpm'
-
-      # 用官方 action 安装 pnpm；在后续步骤里取消 NPM_CONFIG_USERCONFIG，
-      # 避免 pnpm 无法读取项目 .npmrc 中的 onlyBuiltDependencies
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.5.2
+          cache: 'npm'
 
       - name: Verify tools
         run: |
           node --version
-          pnpm --version
+          npm --version
 
-      # 防御性取消 NPM_CONFIG_USERCONFIG，确保 pnpm 读取项目 .npmrc
+      # 直接使用 npm 安装依赖，避免 pnpm 在 CI 中的各种兼容问题
       - name: Install dependencies
         run: |
           unset NPM_CONFIG_USERCONFIG
-          pnpm install
+          npm install
 
       - name: Type check
-        run: pnpm type-check
+        run: npm run type-check
 
       - name: Run tests
-        run: pnpm test
+        run: npm test
 
       - name: Build
-        run: pnpm build
+        run: npm run build
 
       - name: Publish to npm
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ inputs.dry_run }}" = "true" ]; then
               echo "🧪 Dry-run 模式..."
-              pnpm publish --no-git-checks --dry-run --tag=${{ inputs.tag }}
+              npm publish --dry-run --tag=${{ inputs.tag }}
             else
               echo "🚀 手动触发正式发布..."
-              pnpm publish --no-git-checks --tag=${{ inputs.tag }}
+              npm publish --tag=${{ inputs.tag }}
             fi
           else
             echo "🚀 Tag 触发自动发布: ${{ github.ref_name }}"
-            pnpm publish --no-git-checks --tag=latest
+            npm publish --tag=latest
           fi
 
       - name: Display publish result
