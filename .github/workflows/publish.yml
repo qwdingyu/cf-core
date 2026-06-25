@@ -46,9 +46,9 @@ jobs:
     env:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      # pnpm v11 中 NPM_CONFIG_USERCONFIG 覆盖了项目 .npmrc
-      # 通过环境变量直接注入 onlyBuiltDependencies 配置
-      npm_config_only_built_dependencies: '["esbuild"]'
+      # 禁用 pnpm v11 strict 模式（允许 esbuild 等依赖执行 postinstall 脚本）
+      # 参考: https://pnpm.io/npmrc#package-manager-strict
+      COREPACK_ENABLE_STRICT: "0"
 
     steps:
       - name: Checkout
