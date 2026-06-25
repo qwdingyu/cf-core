@@ -46,6 +46,9 @@ jobs:
     env:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # pnpm v11 中 NPM_CONFIG_USERCONFIG 覆盖了项目 .npmrc
+      # 通过环境变量直接注入 onlyBuiltDependencies 配置
+      npm_config_only_built_dependencies: '["esbuild"]'
 
     steps:
       - name: Checkout
