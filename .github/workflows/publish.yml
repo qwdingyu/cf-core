@@ -10,9 +10,7 @@
 #        仓库 → Actions → Publish → Run workflow
 #
 # 前置条件：
-#   在 GitHub 仓库 Settings → Secrets and variables → Actions 中设置：
-#     NPM_TOKEN   npm 自动化 access token（https://npmjs.com/settings/tokens）
-#
+#   NPM_TOKEN 通过 scripts/setup-github-secrets.sh 一键配置
 # ============================================================================
 
 name: Publish
@@ -21,7 +19,7 @@ on:
   # ---- 方式一：推送 tag 时自动发布 ----
   push:
     tags:
-      - 'v*'         # v0.3.0, v0.4.0, v1.0.0 ...
+      - 'v*'
 
   # ---- 方式二：在 GitHub UI 中手动触发 ----
   workflow_dispatch:
@@ -34,10 +32,6 @@ on:
         description: 'dist-tag（正式版用 latest，beta 用 beta）'
         type: string
         default: latest
-      registry:
-        description: 'registry URL（默认 npmjs）'
-        type: string
-        default: 'https://registry.npmjs.org/'
 
 concurrency:
   group: publish-${{ github.ref }}
@@ -49,72 +43,59 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    # 设置 npm registry 认证（让 npm/pnpm publish 自动读取）
     env:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      # 脚本也通过此环境变量读取
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
     steps:
-      # ---- 1. 检出代码 ----
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ---- 2. 安装 Node.js + pnpm（使用 corepack） ----
+      # 先装 pnpm（用官方 action，最稳定），再装 Node（利用 pnpm 做缓存）
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
-
-      - name: Enable pnpm via corepack
-        run: corepack enable && corepack prepare pnpm@latest --activate
 
       - name: Verify tools
         run: |
           node --version
           pnpm --version
 
-      # ---- 3. 安装依赖 ----
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # ---- 4. 类型检查 + 测试 ----
       - name: Type check
         run: pnpm type-check
 
       - name: Run tests
         run: pnpm test
 
-      # ---- 5. 构建 ----
       - name: Build
         run: pnpm build
 
-      # ---- 6. 发布到 npm ----
       - name: Publish to npm
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
-            echo "🧪 Dry-run 模式..."
-            pnpm publish --no-git-checks --dry-run \
-              --tag=${{ inputs.tag }} \
-              --registry=${{ inputs.registry }}
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "🚀 手动触发正式发布..."
-            pnpm publish --no-git-checks \
-              --tag=${{ inputs.tag }} \
-              --registry=${{ inputs.registry }}
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "🧪 Dry-run 模式..."
+              pnpm publish --no-git-checks --dry-run --tag=${{ inputs.tag }}
+            else
+              echo "🚀 手动触发正式发布..."
+              pnpm publish --no-git-checks --tag=${{ inputs.tag }}
+            fi
           else
-            echo "🚀 Tag 触发自动发布..."
-            # 从 git tag 提取版本号（v0.3.0 → 0.3.0）
-            VERSION="${GITHUB_REF_NAME#v}"
-            echo "版本号: $VERSION"
+            echo "🚀 Tag 触发自动发布: ${{ github.ref_name }}"
             pnpm publish --no-git-checks --tag=latest
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # ---- 7. 发布成功通知 ----
       - name: Display publish result
         if: success()
         run: |
