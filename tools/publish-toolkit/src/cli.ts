@@ -13,15 +13,16 @@
  */
 
 import { Command } from "commander";
+import { readFileSync } from "node:fs";
 import { PublishToolkit } from "./publish/publisher.js";
-import { Obfuscator, ObfuscateLevel } from "./obfuscate/obfuscator.js";
+import { Obfuscator, ObfuscateLevel, ObfuscateOptions } from "./obfuscate/obfuscator.js";
 
 const program = new Command();
 
 program
   .name("publish-toolkit")
   .description("统一 npm 包发布工具链 — 混淆构建、包准备、一键发布")
-  .version("0.1.0");
+  .version("0.1.1");
 
 // ===== publish 命令 =====
 
@@ -66,25 +67,46 @@ program
 
 program
   .command("obfuscate")
-  .description("对构建产物进行混淆（占位实现）")
+  .description("对构建产物进行混淆")
   .requiredOption("--input <dir>", "输入目录")
   .requiredOption("--output <dir>", "输出目录")
   .option("--level <name>", "混淆级别: none | light | medium | aggressive", "light")
   .option("--source-map", "保留 source map")
+  .option("-e, --exclude <pattern>", "排除文件（支持简单 glob，可多次指定）", [] as string[])
+  .option("--config <path>", "混淆器自定义配置 JSON 文件路径")
   .action(async (options) => {
     const level = options.level as ObfuscateLevel;
     const obfuscator = new Obfuscator(level);
 
-    const result = await obfuscator.obfuscate({
+    const obfuscateOptions: ObfuscateOptions = {
       inputDir: options.input,
       outputDir: options.output,
       level,
       sourceMap: options.sourceMap,
-    });
+      exclude: options.exclude,
+    };
+
+    if (options.config) {
+      try {
+        obfuscateOptions.options = JSON.parse(readFileSync(options.config, "utf-8"));
+      } catch (err) {
+        console.error(`[obfuscate ❌] 无法读取配置文件: ${options.config}`);
+        process.exit(1);
+      }
+    }
+
+    const result = await obfuscator.obfuscate(obfuscateOptions);
 
     console.log(`[obfuscate] ${result.message}`);
     console.log(`  输出目录: ${result.outputDir}`);
     console.log(`  处理文件数: ${result.processedFiles}`);
+    if (result.inputSize > 0 && result.outputSize > 0) {
+      console.log(`  输入大小: ${(result.inputSize / 1024).toFixed(2)} KB`);
+      console.log(`  输出大小: ${(result.outputSize / 1024).toFixed(2)} KB`);
+    }
+    if (!result.success) {
+      process.exitCode = 1;
+    }
   });
 
 // ===== help 命令 =====
