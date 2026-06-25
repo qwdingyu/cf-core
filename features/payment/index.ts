@@ -1,14 +1,14 @@
 /**
- * @eforge/cf-core/features/payment — 支付功能模块
+ * @iusethink/cf-core/features/payment — 支付功能模块
  *
  * 统一导出所有支付相关能力。支持两种导入方式：
  *
  * 1. 从根导入（适合小项目）：
- *    import { alipayFactory, stripeFactory } from "@eforge/cf-core/features/payment";
+ *    import { alipayFactory, stripeFactory } from "@iusethink/cf-core/features/payment";
  *
  * 2. 按子路径导入（推荐，tree-shakeable）：
- *    import { alipayFactory } from "@eforge/cf-core/features/payment/providers/alipay";
- *    import { stripeFactory } from "@eforge/cf-core/features/payment/providers/stripe";
+ *    import { alipayFactory } from "@iusethink/cf-core/features/payment/providers/alipay";
+ *    import { stripeFactory } from "@iusethink/cf-core/features/payment/providers/stripe";
  */
 
 // ── 类型 ──

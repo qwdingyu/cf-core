@@ -8,7 +8,7 @@
 ## 快速使用
 
 ```ts
-import { EmailService } from "@eforge/cf-core/features/email";
+import { EmailService } from "@iusethink/cf-core/features/email";
 
 const email = new EmailService({
   apiKey: env.RESEND_API_KEY,

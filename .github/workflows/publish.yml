@@ -1,5 +1,5 @@
 # ============================================================================
-# @eforge/cf-core — npm 包自动发布 Workflow
+# @iusethink/cf-core — npm 包自动发布 Workflow
 # ============================================================================
 #
 # 触发方式（两种）：
@@ -56,7 +56,6 @@ jobs:
         with:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
 
       - name: Verify tools
         run: |

@@ -1,5 +1,5 @@
 /**
- * @eforge/cf-core — 公共类型定义
+ * @iusethink/cf-core — 公共类型定义
  *
  * 所有项目共享的基础类型约束。
  * 各项目通过 extends 扩展自己的 AppEnv，保持与 cf-core 兼容。

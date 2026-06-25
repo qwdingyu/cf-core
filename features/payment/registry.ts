@@ -7,7 +7,7 @@
  *
  * @example
  * ```ts
- * import { createProviderRegistry, stripeFactory, alipayFactory } from "@eforge/cf-core/features/payment";
+ * import { createProviderRegistry, stripeFactory, alipayFactory } from "@iusethink/cf-core/features/payment";
  *
  * // 纯环境变量模式（向后兼容）
  * const registry = createProviderRegistry(env, [stripeFactory, alipayFactory]);

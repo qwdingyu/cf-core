@@ -15,7 +15,7 @@
 ## 示例
 
 ```ts
-import { getIpHash, verifyTurnstile } from "@eforge/cf-core/security";
+import { getIpHash, verifyTurnstile } from "@iusethink/cf-core/security";
 
 api.post("/orders", async (c) => {
   const turnstile = await verifyTurnstile(c, body.turnstileToken);

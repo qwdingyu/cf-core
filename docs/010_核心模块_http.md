@@ -16,7 +16,7 @@
 ## 示例
 
 ```ts
-import { ok, fail, maskContact } from "@eforge/cf-core/http";
+import { ok, fail, maskContact } from "@iusethink/cf-core/http";
 
 api.get("/users/:id", async (c) => {
   const user = await getUser(c.req.param("id"));
