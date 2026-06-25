@@ -196,6 +196,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260524.1",
+    "@usethink/publish-toolkit": "workspace:*",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   }

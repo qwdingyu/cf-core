@@ -1,3 +1,6 @@
+packages:
+  - "tools/publish-toolkit"
+
 allowBuilds:
   esbuild: true
 # pnpm v11 配置：允许 esbuild 执行 postinstall 脚本
