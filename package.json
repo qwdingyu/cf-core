@@ -1,6 +1,6 @@
 {
   "name": "@usethink/cf-core",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Cloudflare Workers 共享内核 — Hono + Turso + Drizzle 标准化基础设施",
   "type": "module",
   "main": "dist/src/index.js",
