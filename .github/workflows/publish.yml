@@ -61,6 +61,7 @@ jobs:
         run: |
           node --version
           npm --version
+          pnpm --version
           echo "Event: ${{ github.event_name }}"
           echo "Ref: ${{ github.ref_name }}"
 
@@ -97,16 +98,16 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ inputs.dry_run }}" = "true" ]; then
               echo "🧪 Dry-run 模式..."
-              npx publish-toolkit publish --dry-run --registry=https://registry.npmjs.org/ --verbose
+              pnpm exec publish-toolkit publish --dry-run --registry=https://registry.npmjs.org/ --verbose
               echo "dry_run=true" >> $GITHUB_OUTPUT
             else
               echo "🚀 手动触发正式发布..."
-              npx publish-toolkit publish --registry=https://registry.npmjs.org/ --verbose
+              pnpm exec publish-toolkit publish --registry=https://registry.npmjs.org/ --verbose
               echo "dry_run=false" >> $GITHUB_OUTPUT
             fi
           else
             echo "🚀 Tag 触发自动发布: ${{ github.ref_name }}"
-            npx publish-toolkit publish --registry=https://registry.npmjs.org/ --verbose
+            pnpm exec publish-toolkit publish --registry=https://registry.npmjs.org/ --verbose
             echo "dry_run=false" >> $GITHUB_OUTPUT
           fi
 
