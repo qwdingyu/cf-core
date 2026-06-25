@@ -1,0 +1,202 @@
+{
+  "name": "@eforge/cf-core",
+  "version": "0.3.0",
+  "description": "Cloudflare Workers 共享内核 — Hono + Turso + Drizzle 标准化基础设施",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist/src",
+    "dist/features",
+    "src",
+    "features",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": {
+        "development": "./src/index.ts",
+        "default": "./dist/src/index.js"
+      }
+    },
+    "./types": {
+      "types": "./dist/src/types.d.ts",
+      "import": {
+        "development": "./src/types.ts",
+        "default": "./dist/src/types.js"
+      }
+    },
+    "./http": {
+      "types": "./dist/src/http.d.ts",
+      "import": {
+        "development": "./src/http.ts",
+        "default": "./dist/src/http.js"
+      }
+    },
+    "./security": {
+      "types": "./dist/src/security.d.ts",
+      "import": {
+        "development": "./src/security.ts",
+        "default": "./dist/src/security.js"
+      }
+    },
+    "./rate-limit": {
+      "types": "./dist/src/rate-limit.d.ts",
+      "import": {
+        "development": "./src/rate-limit.ts",
+        "default": "./dist/src/rate-limit.js"
+      }
+    },
+    "./cache": {
+      "types": "./dist/src/cache.d.ts",
+      "import": {
+        "development": "./src/cache.ts",
+        "default": "./dist/src/cache.js"
+      }
+    },
+    "./idempotency": {
+      "types": "./dist/src/idempotency.d.ts",
+      "import": {
+        "development": "./src/idempotency.ts",
+        "default": "./dist/src/idempotency.js"
+      }
+    },
+    "./audit": {
+      "types": "./dist/src/audit.d.ts",
+      "import": {
+        "development": "./src/audit.ts",
+        "default": "./dist/src/audit.js"
+      }
+    },
+    "./config": {
+      "types": "./dist/src/config.d.ts",
+      "import": {
+        "development": "./src/config.ts",
+        "default": "./dist/src/config.js"
+      }
+    },
+    "./bootstrap": {
+      "types": "./dist/src/bootstrap.d.ts",
+      "import": {
+        "development": "./src/bootstrap.ts",
+        "default": "./dist/src/bootstrap.js"
+      }
+    },
+    "./error": {
+      "types": "./dist/src/error.d.ts",
+      "import": {
+        "development": "./src/error.ts",
+        "default": "./dist/src/error.js"
+      }
+    },
+    "./logger": {
+      "types": "./dist/src/logger.d.ts",
+      "import": {
+        "development": "./src/logger.ts",
+        "default": "./dist/src/logger.js"
+      }
+    },
+    "./crypto": {
+      "types": "./dist/src/crypto.d.ts",
+      "import": {
+        "development": "./src/crypto.ts",
+        "default": "./dist/src/crypto.js"
+      }
+    },
+    "./db": {
+      "types": "./dist/src/db/index.d.ts",
+      "import": {
+        "development": "./src/db/index.ts",
+        "default": "./dist/src/db/index.js"
+      }
+    },
+    "./db/schema": {
+      "types": "./dist/src/db/schema.d.ts",
+      "import": {
+        "development": "./src/db/schema.ts",
+        "default": "./dist/src/db/schema.js"
+      }
+    },
+    "./auth/jwt": {
+      "types": "./dist/src/auth/jwt.d.ts",
+      "import": {
+        "development": "./src/auth/jwt.ts",
+        "default": "./dist/src/auth/jwt.js"
+      }
+    },
+    "./auth/password": {
+      "types": "./dist/src/auth/password.d.ts",
+      "import": {
+        "development": "./src/auth/password.ts",
+        "default": "./dist/src/auth/password.js"
+      }
+    },
+    "./middleware": {
+      "types": "./dist/src/middleware/index.d.ts",
+      "import": {
+        "development": "./src/middleware/index.ts",
+        "default": "./dist/src/middleware/index.js"
+      }
+    },
+    "./features/payment": {
+      "types": "./dist/features/payment/index.d.ts",
+      "import": {
+        "development": "./features/payment/index.ts",
+        "default": "./dist/features/payment/index.js"
+      }
+    },
+    "./features/email": {
+      "types": "./dist/features/email/index.d.ts",
+      "import": {
+        "development": "./features/email/index.ts",
+        "default": "./dist/features/email/index.js"
+      }
+    },
+    "./features/webhook": {
+      "types": "./dist/features/webhook/index.d.ts",
+      "import": {
+        "development": "./features/webhook/index.ts",
+        "default": "./dist/features/webhook/index.js"
+      }
+    },
+    "./features/thompson-router": {
+      "types": "./dist/features/thompson-router/index.d.ts",
+      "import": {
+        "development": "./features/thompson-router/index.ts",
+        "default": "./dist/features/thompson-router/index.js"
+      }
+    },
+    "./features/anti-abuse": {
+      "types": "./dist/features/anti-abuse/index.d.ts",
+      "import": {
+        "development": "./features/anti-abuse/index.ts",
+        "default": "./dist/features/anti-abuse/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm run type-check && pnpm test",
+    "prepack": "pnpm run build"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.7.0",
+    "hono": "^4.12.22",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260524.1",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
