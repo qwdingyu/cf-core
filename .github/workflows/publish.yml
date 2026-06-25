@@ -65,10 +65,11 @@ jobs:
           echo "Ref: ${{ github.ref_name }}"
 
       # 直接使用 npm 安装依赖，避免 pnpm 在 CI 中的各种兼容问题
+      # 使用 npm ci 确保 lockfile 不被修改，避免触发 git check 失败
       - name: Install dependencies
         run: |
           unset NPM_CONFIG_USERCONFIG
-          npm install
+          npm ci
 
       - name: Verify package.json
         run: |
