@@ -1,8 +1,10 @@
 packages:
-  - "tools/publish-toolkit"
+  - "tools/*"
 
 allowBuilds:
   esbuild: true
+minimumReleaseAgeExclude:
+  - '@usethink/publish-toolkit@0.1.8'
 # pnpm v11 配置：允许 esbuild 执行 postinstall 脚本
 # 此配置会被写入 pnpm-lock.yaml 的 onlyBuiltDependencies 字段
 onlyBuiltDependencies:
