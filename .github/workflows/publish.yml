@@ -69,10 +69,10 @@ jobs:
           node --version
           pnpm --version
 
-      # pnpm v11 CI 中 NPM_CONFIG_USERCONFIG 覆盖了项目 .npmrc
-      # 因此用 --config. 参数直接传递允许的构建依赖
+      # pnpm v11 中 NPM_CONFIG_USERCONFIG 覆盖了项目 .npmrc，导致 onlyBuiltDependencies 失效
+      # 使用 --config. 参数也不支持此键，故降级为普通 install（锁文件仍是确定性安装）
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --config.onlyBuiltDependencies='["esbuild"]'
+        run: pnpm install
 
       - name: Type check
         run: pnpm type-check
