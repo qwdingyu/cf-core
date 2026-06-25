@@ -1,16 +1,18 @@
 /**
- * @usethink/publish-toolkit — 混淆引擎接口
+ * @usethink/publish-toolkit — 混淆引擎
  *
- * 当前 node-backend-core 中无混淆逻辑，此处先定义接口与占位实现。
- * 后续接入项目（如含前端产物或 JS 库的项目）可替换为真实混淆器。
+ * 基于 javascript-obfuscator 实现，支持多级混淆策略。
  *
  * 设计目标：
- *   1. 支持多级混淆策略（light / medium / aggressive）
+ *   1. 支持多级混淆策略（none / light / medium / aggressive）
  *   2. 零侵入：输入输出均为文件路径，不修改项目源码结构
- *   3. 可插拔：通过 register() 替换默认实现
+ *   3. 可配置：支持 source map、排除规则、自定义选项
  */
 
-import { existsSync, readFileSync, writeFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, statSync, mkdirSync, readdirSync } from "node:fs";
+import { join, relative, extname, dirname } from "node:path";
+import { obfuscate } from "javascript-obfuscator";
+import type { ObfuscatorOptions } from "javascript-obfuscator";
 
 // ===== 类型定义 =====
 
@@ -25,7 +27,7 @@ export interface ObfuscateOptions {
   level?: ObfuscateLevel;
   /** 是否保留 source map */
   sourceMap?: boolean;
-  /** 排除的文件glob模式 */
+  /** 排除的文件glob模式（简单实现，仅支持后缀） */
   exclude?: string[];
 }
 
@@ -36,13 +38,111 @@ export interface ObfuscateResult {
   message: string;
 }
 
-// ===== 默认实现（占位） =====
+// ===== 级别预设 =====
 
 /**
- * 默认混淆器实现。
+ * 根据级别获取混淆器配置
  *
- * 当前为文件复制占位逻辑，不做实际混淆。
- * 接入真实混淆器（如 javascript-obfuscator）时，替换此函数体即可。
+ * 设计意图：
+ *   - none: 完全跳过混淆，仅复制文件
+ *   - light: 基础混淆，适合需要一定保护但不追求极致体积的场景
+ *   - medium: 平衡混淆，适合大多数发布场景
+ *   - aggressive: 最大混淆，适合对代码保护要求极高的场景
+ */
+function getObfuscatorOptions(level: ObfuscateLevel, sourceMap: boolean): ObfuscatorOptions {
+  const base: ObfuscatorOptions = {
+    sourceMap: sourceMap,
+    sourceMapMode: "separate",
+    selfDefending: false,
+    // 通用选项：保持代码功能不变的前提下增加阅读难度
+    stringArray: true,
+    stringArrayThreshold: 0.5,
+  };
+
+  switch (level) {
+    case "none":
+      // 不做任何混淆，但仍保留基础结构
+      return {
+        ...base,
+        compact: false,
+        controlFlowFlattening: false,
+        deadCodeInjection: false,
+        debugProtection: false,
+        disableConsoleOutput: false,
+        identifierNamesGenerator: "hexadecimal",
+        rotateStringArray: false,
+        stringArrayEncoding: ["rc4"],
+        stringArrayThreshold: 1,
+        transformObjectKeys: false,
+        unicodeEscapeSequence: false,
+      };
+
+    case "light":
+      return {
+        ...base,
+        compact: true,
+        controlFlowFlattening: false,
+        deadCodeInjection: false,
+        debugProtection: false,
+        disableConsoleOutput: false,
+        identifierNamesGenerator: "hexadecimal",
+        rotateStringArray: true,
+        stringArrayEncoding: ["rc4"],
+        stringArrayThreshold: 0.75,
+        transformObjectKeys: false,
+        unicodeEscapeSequence: false,
+      };
+
+    case "medium":
+      return {
+        ...base,
+        compact: true,
+        controlFlowFlattening: true,
+        controlFlowFlatteningThreshold: 0.5,
+        deadCodeInjection: true,
+        deadCodeInjectionThreshold: 0.4,
+        debugProtection: false,
+        disableConsoleOutput: false,
+        identifierNamesGenerator: "hexadecimal",
+        rotateStringArray: true,
+        stringArrayEncoding: ["rc4"],
+        stringArrayThreshold: 0.8,
+        transformObjectKeys: true,
+        unicodeEscapeSequence: false,
+      };
+
+    case "aggressive":
+      return {
+        ...base,
+        compact: true,
+        controlFlowFlattening: true,
+        controlFlowFlatteningThreshold: 0.75,
+        deadCodeInjection: true,
+        deadCodeInjectionThreshold: 0.6,
+        debugProtection: true,
+        disableConsoleOutput: true,
+        identifierNamesGenerator: "hexadecimal",
+        rotateStringArray: true,
+        stringArrayEncoding: ["rc4"],
+        stringArrayThreshold: 0.9,
+        transformObjectKeys: true,
+        unicodeEscapeSequence: true,
+      };
+
+    default:
+      return base;
+  }
+}
+
+// ===== 混淆器实现 =====
+
+/**
+ * 默认混淆器实现，基于 javascript-obfuscator。
+ *
+ * 使用场景：
+ *   - 对构建产物（dist/）进行混淆，保护代码逻辑
+ *   - 支持 CI/CD 流水线集成
+ *   - 不修改源码，仅处理输出文件
  */
 export class Obfuscator {
   private level: ObfuscateLevel;
@@ -51,34 +151,169 @@ export class Obfuscator {
     this.level = level;
   }
 
+  /**
+   * 执行混淆
+   *
+   * 处理流程：
+   *   1. 验证输入输出目录
+   *   2. 递归扫描输入目录中的 .js/.mjs/.ts 文件
+   *   3. 根据级别选择混淆策略
+   *   4. 写入输出目录，保持相对路径结构
+   *   5. 返回处理结果统计
+   */
   async obfuscate(options: ObfuscateOptions): Promise<ObfuscateResult> {
-    const { inputDir, outputDir, exclude = [] } = options;
+    const { inputDir, outputDir, sourceMap = false, exclude = [] } = options;
+    const level = this.level;
 
-    if (this.level === "none") {
+    // 验证输入目录
+    if (!existsSync(inputDir)) {
       return {
-        success: true,
+        success: false,
         processedFiles: 0,
         outputDir,
-        message: "混淆级别为 none，跳过混淆",
+        message: `输入目录不存在: ${inputDir}`,
       };
     }
 
-    // 简单实现：递归复制 .js/.mjs 文件到输出目录
-    // 真实场景下此处应调用 javascript-obfuscator 或类似工具
-    let processed = 0;
+    // 创建输出目录
+    if (!existsSync(outputDir)) {
+      mkdirSync(outputDir, { recursive: true });
+    }
 
-    const walk = (dir: string) => {
+    // none 级别：直接复制，跳过混淆
+    if (level === "none") {
+      return this.copyFiles(inputDir, outputDir, exclude);
+    }
+
+    // 获取混淆配置
+    const obfuscatorOptions = getObfuscatorOptions(level, sourceMap);
+
+    // 递归处理文件
+    let processedFiles = 0;
+    const errors: string[] = [];
+
+    const processDirectory = (dir: string) => {
       if (!existsSync(dir)) return;
-      const entries = readFileSync(dir, "utf-8").split("\n").filter(Boolean);
-      // 注意：readFileSync 读取目录在部分系统上行为不同
-      // 此处仅为占位逻辑，真实实现应使用 fs.readdir + recursive walk
+
+      const entries = readdirSync(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = join(dir, entry.name);
+        const relativePath = relative(inputDir, fullPath);
+        const ext = extname(fullPath);
+
+        // 跳过排除的文件
+        if (exclude.some((pattern) => fullPath.endsWith(pattern) || relativePath.endsWith(pattern))) {
+          continue;
+        }
+
+        if (entry.isDirectory()) {
+          // 递归处理子目录
+          processDirectory(fullPath);
+        } else if (entry.isFile() && (ext === ".js" || ext === ".mjs" || ext === ".ts")) {
+          try {
+            // 读取源文件
+            const sourceCode = readFileSync(fullPath, "utf-8");
+
+            // 执行混淆
+            const obfuscatedCode = obfuscate(
+              sourceCode,
+              obfuscatorOptions
+            ).getObfuscatedCode();
+
+            // 写入输出文件
+            const outputPath = join(outputDir, relativePath);
+            const outputFileDir = dirname(outputPath);
+
+            if (!existsSync(outputFileDir)) {
+              mkdirSync(outputFileDir, { recursive: true });
+            }
+
+            writeFileSync(outputPath, obfuscatedCode, "utf-8");
+
+            // 生成 source map（如果启用）
+            if (sourceMap) {
+              const sourceMapResult = obfuscate(
+                sourceCode,
+                { ...obfuscatorOptions, sourceMap: true }
+              );
+              const sourceMap = sourceMapResult.getSourceMap();
+              
+              if (sourceMap) {
+                writeFileSync(`${outputPath}.map`, sourceMap, "utf-8");
+              }
+            }
+
+            processedFiles++;
+          } catch (err) {
+            errors.push(`${fullPath}: ${(err as Error).message}`);
+          }
+        }
+      }
     };
+
+    processDirectory(inputDir);
+
+    // 构建结果消息
+    let message = `混淆完成（level=${level}），处理 ${processedFiles} 个文件`;
+    if (errors.length > 0) {
+      message += `，${errors.length} 个文件失败`;
+      // 在开发/调试场景下把失败原因一并返回，方便定位问题
+      message += `：${errors.join("；")}`;
+    }
+
+    return {
+      success: errors.length === 0,
+      processedFiles,
+      outputDir,
+      message,
+    };
+  }
+
+  /**
+   * 复制文件（用于 none 级别）
+   */
+  private copyFiles(inputDir: string, outputDir: string, exclude: string[]): ObfuscateResult {
+    let processedFiles = 0;
+
+    const copyDirectory = (dir: string) => {
+      if (!existsSync(dir)) return;
+
+      const entries = readdirSync(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = join(dir, entry.name);
+        const relativePath = relative(inputDir, fullPath);
+
+        // 跳过排除的文件
+        if (exclude.some((pattern) => fullPath.endsWith(pattern) || relativePath.endsWith(pattern))) {
+          continue;
+        }
+
+        if (entry.isDirectory()) {
+          copyDirectory(fullPath);
+        } else if (entry.isFile()) {
+          const outputPath = join(outputDir, relativePath);
+          const outputFileDir = dirname(outputPath);
+
+          if (!existsSync(outputFileDir)) {
+            mkdirSync(outputFileDir, { recursive: true });
+          }
+
+          const content = readFileSync(fullPath, "utf-8");
+          writeFileSync(outputPath, content, "utf-8");
+          processedFiles++;
+        }
+      }
+    };
+
+    copyDirectory(inputDir);
 
     return {
       success: true,
-      processedFiles: processed,
+      processedFiles,
       outputDir,
-      message: `占位混淆完成（level=${this.level}），未实际处理文件。接入真实混淆器后生效。`,
+      message: `none 级别：复制完成，处理 ${processedFiles} 个文件`,
     };
   }
 }

@@ -313,3 +313,102 @@ Workflow run: `28153563824`（success）
 - [ ] 考虑完全移除 `.npmrc` 中的 `onlyBuiltDependencies`，改用 `pnpm.onlyBuiltDependencies` 或 `overrides` 解决 esbuild 脚本问题
 - [ ] 如果未来要恢复 pnpm，建议在 `pnpm/action-setup` 后添加 `pnpm config set onlyBuiltDependencies esbuild` 显式配置
 - [ ] 在 README 中注明：CI 使用 npm，本地开发使用 pnpm
+
+---
+
+## 七、npm 2FA / Granular Access Token 403 踩坑记录
+
+> 日期：2026-06-25  
+> 影响：`Publish` workflow 在 `npm publish` 阶段报 403，构建和测试均通过但无法发布
+
+### 7.1 问题现象
+
+切换 npm 后，workflow 的 test、build 阶段均已通过，但在 `Publish to npm` 步骤失败：
+
+```
+npm error code E403
+npm error 403 Forbidden - PUT https://registry.npmjs.org/@usethink%2fcf-core
+npm error Two-factor authentication or granular access token with bypass 2fa enabled is required to publish packages.
+```
+
+### 7.2 排查过程
+
+1. **误判 1：账号未开启 2FA**  
+   登录 npm 账号设置页面，确认账号级 Two-Factor Authentication 确实未启用。初步认为是 token 过期或权限不足，重新生成 classic token 后问题依旧。
+
+2. **误判 2：链接过时**  
+   按旧文档指引访问 `https://www.npmjs.com/settings/tokens`，返回 404。npm 已迁移 token 管理页面，但这不是根本原因。
+
+3. **关键线索：scope 包策略**  
+   该包为 `@usethink/cf-core`（scope 包），scope 包的安全策略由组织或包级别配置决定，不完全等同于个人账号的 2FA 设置。
+
+### 7.3 根因分析
+
+| 问题 | 根因 | 影响 |
+|------|------|------|
+| npm publish 403 | 使用的 classic token 或未开启 `bypass 2FA` 的 granular token，不满足 scope 包的发布策略要求 | 无法发布到 npmjs |
+| 旧链接 404 | npm 已迁移 token 管理入口 | 按旧文档操作时找不到页面 |
+
+**核心机制**：即使账号级 2FA 未开启，npm 的组织/包级别策略仍可能要求发布时必须使用 **Granular Access Token** 且 **bypass 2FA = true**。这是 scope 包的强制安全策略，与个人账号设置无关。
+
+### 7.4 修复方案
+
+1. 登录 npm，进入 **Settings → Tokens**
+2. 生成 **Granular Access Token**（非 Classic token）
+3. 配置令牌：
+   - **Packages and scopes**：选择目标 scope 和包（如 `@usethink/cf-core`）
+   - 权限：**Publish**
+   - **bypass 2FA**：必须设置为 **true**
+4. 将新 token 更新到 GitHub Secret：
+
+```bash
+NPM_TOKEN="npm_你的新token" bash scripts/setup-github-secrets.sh
+```
+
+5. 重新触发 workflow 验证发布链路
+
+### 7.5 验证结果
+
+workflow `28155702194` 成功完成：
+
+```
+Publishing to https://registry.npmjs.org/ with tag latest and public access
++ @usethink/cf-core@0.3.0
+✅ @usethink/cf-core@0.3.0 发布成功！
+```
+
+### 7.6 经验教训
+
+1. **scope 包不等于个人包**：`@scope/name` 的发布权限由组织/包策略决定，不能假设个人账号设置等同于包设置。
+2. **Classic token 已不适合自动化发布**：npm 正在推动 Granular Access Token，CI/CD 场景应优先使用 granular token 并显式开启 `bypass 2FA`。
+3. **403 要读全错误信息**：npm 的 403 错误明确说明了 `bypass 2fa enabled is required`，应直接按提示修复，而不是反复重试旧 token。
+4. **官方链接会迁移**：文档中的 `https://www.npmjs.com/settings/tokens` 已 404，应使用 npm 当前 UI 路径或官方搜索入口。
+
+### 7.7 标准工作流（最佳实践）
+
+基于本次踩坑，整理出 **npm 包发布标准工作流**：
+
+```bash
+# 1. 本地修改代码后 bump 版本
+# 编辑 package.json 中的 version 字段
+
+# 2. 提交并打 tag
+git add -A
+git commit -m "chore: bump version to x.y.z"
+git tag vx.y.z
+git push && git push origin vx.y.z
+
+# 3. GitHub Actions 自动执行：
+#    test → build → publish ✅
+
+# 4. Token 管理
+# - 使用 Granular Access Token（非 Classic）
+# - bypass 2FA 必须开启
+# - Token 过期后重新生成并更新 GitHub Secret
+```
+
+**GitHub Secret 更新脚本**（已内置在项目中）：
+
+```bash
+NPM_TOKEN="npm_你的granular_token" bash scripts/setup-github-secrets.sh
+```
