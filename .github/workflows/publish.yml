@@ -69,6 +69,13 @@ jobs:
           node --version
           pnpm --version
 
+      # pnpm v11 默认禁止未知包的 postinstall 脚本
+      # 配置允许 esbuild 执行构建（用于 vitest 的 esbuild 预购建）
+      - name: Configure pnpm build permissions
+        run: |
+          pnpm config set onlyBuiltDependencies '["esbuild"]' --location project
+          cat .npmrc
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
