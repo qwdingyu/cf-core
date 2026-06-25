@@ -58,13 +58,12 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
-      # 显式启用 corepack，并全局暴露 pnpm，避免 shim/PATH 问题
-      - name: Enable pnpm via corepack
-        run: |
-          corepack enable
-          COREPACK_ENABLE_STRICT=0 corepack prepare pnpm@11.5.2 --activate
-          echo "$(npm root -g)/.bin" >> "$GITHUB_PATH"
-          npm install -g pnpm@11.5.2
+      # 用官方 action 安装 pnpm；在后续步骤里取消 NPM_CONFIG_USERCONFIG，
+      # 避免 pnpm 无法读取项目 .npmrc 中的 onlyBuiltDependencies
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
 
       - name: Verify tools
         run: |
