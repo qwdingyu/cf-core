@@ -99,7 +99,7 @@ function sampleBeta(alpha: number, beta: number): number {
  *
  * @example
  * ```ts
- * import { ThompsonRouter } from "@iusethink/cf-core/plugins/thompson-router";
+ * import { ThompsonRouter } from "@usethink/cf-core/plugins/thompson-router";
  *
  * const router = new ThompsonRouter();
  *

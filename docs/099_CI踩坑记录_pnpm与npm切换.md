@@ -177,7 +177,7 @@ npm install --legacy-peer-deps
 **现象**：切换到 npm 后，`npm publish` 触发 `prepublishOnly` 失败：
 
 ```
-> @iusethink/cf-core@0.3.0 prepublishOnly
+> @usethink/cf-core@0.3.0 prepublishOnly
 > pnpm run type-check && pnpm test
 sh: 1: pnpm: not found
 ```

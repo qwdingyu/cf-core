@@ -3,7 +3,7 @@
 ## 快速使用
 
 ```ts
-import { detectPlatform, initTelegramWebApp, getTelegramUser, applyTelegramTheme } from "@iusethink/cf-core/features/telegram-miniapp";
+import { detectPlatform, initTelegramWebApp, getTelegramUser, applyTelegramTheme } from "@usethink/cf-core/features/telegram-miniapp";
 
 // 平台检测（纯函数，无框架依赖）
 const { platform, isTelegram, isMobile } = detectPlatform();

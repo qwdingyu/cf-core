@@ -3,7 +3,7 @@
 ## 快速使用
 
 ```ts
-import { WebhookService } from "@iusethink/cf-core/features/webhook";
+import { WebhookService } from "@usethink/cf-core/features/webhook";
 
 const hook = new WebhookService({
   urls: "https://hooks.example.com/a,https://hooks.example.com/b",

@@ -3,7 +3,7 @@
 ## 快速使用
 
 ```ts
-import { ThompsonRouter, wilsonScore } from "@iusethink/cf-core/features/thompson-router";
+import { ThompsonRouter, wilsonScore } from "@usethink/cf-core/features/thompson-router";
 
 const router = new ThompsonRouter();
 

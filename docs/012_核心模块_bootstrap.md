@@ -28,8 +28,8 @@
 ## 示例
 
 ```ts
-import { bootstrap } from "@iusethink/cf-core/bootstrap";
-import { createAdminAuth } from "@iusethink/cf-core/middleware";
+import { bootstrap } from "@usethink/cf-core/bootstrap";
+import { createAdminAuth } from "@usethink/cf-core/middleware";
 import * as schema from "./db/schema";
 
 export default bootstrap({

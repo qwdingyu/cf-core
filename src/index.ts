@@ -1,14 +1,14 @@
 /**
- * @iusethink/cf-core — Cloudflare Workers 共享内核
+ * @usethink/cf-core — Cloudflare Workers 共享内核
  *
  * 统一导出所有模块，支持两种导入方式：
  *
  * 1. 从根导入（适合小项目）：
- *    import { ok, fail, sha256, verifyTurnstile } from "@iusethink/cf-core";
+ *    import { ok, fail, sha256, verifyTurnstile } from "@usethink/cf-core";
  *
  * 2. 按子路径导入（推荐，tree-shakeable）：
- *    import { ok, fail } from "@iusethink/cf-core/http";
- *    import { sha256 } from "@iusethink/cf-core/security";
+ *    import { ok, fail } from "@usethink/cf-core/http";
+ *    import { sha256 } from "@usethink/cf-core/security";
  */
 
 // ── HTTP 工具 ──

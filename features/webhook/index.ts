@@ -50,7 +50,7 @@ export interface WebhookResult {
  *
  * @example
  * ```ts
- * import { WebhookService } from "@iusethink/cf-core/plugins/webhook";
+ * import { WebhookService } from "@usethink/cf-core/plugins/webhook";
  *
  * const webhook = new WebhookService({
  *   urls: "https://hooks.example.com/a,https://hooks.example.com/b",

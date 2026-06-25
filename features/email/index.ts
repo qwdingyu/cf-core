@@ -60,7 +60,7 @@ export interface SendResult {
  *
  * @example
  * ```ts
- * import { EmailService } from "@iusethink/cf-core/plugins/email-resend";
+ * import { EmailService } from "@usethink/cf-core/plugins/email-resend";
  *
  * const email = new EmailService({ apiKey: env.RESEND_API_KEY, from: "noreply@example.com" });
  * const result = await email.send({

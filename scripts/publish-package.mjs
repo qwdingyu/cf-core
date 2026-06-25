@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * @iusethink/cf-core — npm 包发布脚本
+ * @usethink/cf-core — npm 包发布脚本
  *
  * 两种用法：
  *   1. 本地手动发布（dry-run 预览 + 确认后正式发布）
@@ -53,7 +53,7 @@ const VERBOSE        = hasFlag("--verbose") || hasFlag("-v");
 // ===== 帮助 =====
 if (HELP) {
   console.log(`
-@iusethink/cf-core 发布脚本
+@usethink/cf-core 发布脚本
 =========================
 
 用法：
@@ -129,7 +129,7 @@ process.on("SIGTERM", () => { warn("收到 SIGTERM，清理中..."); cleanupNpmr
 
 function main() {
   console.log("=".repeat(50));
-  console.log("  @iusethink/cf-core 发布");
+  console.log("  @usethink/cf-core 发布");
   console.log("=".repeat(50));
   console.log();
 

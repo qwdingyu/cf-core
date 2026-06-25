@@ -1,5 +1,5 @@
 {
-  "name": "@iusethink/cf-core",
+  "name": "@usethink/cf-core",
   "version": "0.3.0",
   "description": "Cloudflare Workers 共享内核 — Hono + Turso + Drizzle 标准化基础设施",
   "type": "module",

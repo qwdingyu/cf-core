@@ -14,7 +14,7 @@
 ### 支付宝
 
 ```ts
-import { AlipayProvider } from "@iusethink/cf-core/features/payment";
+import { AlipayProvider } from "@usethink/cf-core/features/payment";
 
 const alipay = new AlipayProvider({
   appId: env.ALIPAY_APP_ID,
@@ -39,7 +39,7 @@ const callback = await alipay.verifyCallback(callbackParams);
 ### Stripe（国际信用卡）
 
 ```ts
-import { StripeProvider } from "@iusethink/cf-core/features/payment";
+import { StripeProvider } from "@usethink/cf-core/features/payment";
 
 const stripe = new StripeProvider(env.STRIPE_SECRET_KEY, env.STRIPE_WEBHOOK_SECRET);
 
@@ -62,7 +62,7 @@ const callback = await stripe.verifyCallback({
 ### USDT/TRC20（加密支付）
 
 ```ts
-import { Trc20Provider } from "@iusethink/cf-core/features/payment";
+import { Trc20Provider } from "@usethink/cf-core/features/payment";
 
 const trc20 = new Trc20Provider(env.TRC20_WALLET_ADDRESS, env.TRONGRID_API_KEY);
 
@@ -90,7 +90,7 @@ import {
   alipayFactory,
   stripeFactory,
   trc20Factory,
-} from "@iusethink/cf-core/features/payment";
+} from "@usethink/cf-core/features/payment";
 
 const registry = createProviderRegistry(env, [
   alipayFactory,   // 需 ALIPAY_APP_ID + ALIPAY_PRIVATE_KEY + ALIPAY_PUBLIC_KEY
@@ -133,7 +133,7 @@ const channels = registry.list(); // ["alipay", "stripe", ...]
 实现 `PaymentProvider` 接口 + 创建 `ProviderFactory`：
 
 ```ts
-import type { PaymentProvider, ProviderFactory } from "@iusethink/cf-core/features/payment";
+import type { PaymentProvider, ProviderFactory } from "@usethink/cf-core/features/payment";
 
 class WechatPayProvider implements PaymentProvider { /* ... */ }
 

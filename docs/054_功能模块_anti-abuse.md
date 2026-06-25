@@ -3,7 +3,7 @@
 ## 快速使用
 
 ```ts
-import { AntiAbuseService } from "@iusethink/cf-core/features/anti-abuse";
+import { AntiAbuseService } from "@usethink/cf-core/features/anti-abuse";
 
 const abuse = new AntiAbuseService({
   maxIpsPerResource: 5,      // 同一资源最大不同 IP 数

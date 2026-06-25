@@ -1,4 +1,4 @@
-# @iusethink/cf-core
+# @usethink/cf-core
 
 Cloudflare Workers 共享内核 — Hono + Turso + Drizzle 标准化基础设施。
 
@@ -22,17 +22,17 @@ npm test
 ### 方式 1：子路径导入（推荐）
 
 ```ts
-import { ok, fail, maskContact } from "@iusethink/cf-core/http";
-import { sha256, verifyTurnstile, getIpHash } from "@iusethink/cf-core/security";
-import { initDatabase } from "@iusethink/cf-core/db";
-import { createAdminAuth } from "@iusethink/cf-core/middleware";
-import { bootstrap } from "@iusethink/cf-core/bootstrap";
+import { ok, fail, maskContact } from "@usethink/cf-core/http";
+import { sha256, verifyTurnstile, getIpHash } from "@usethink/cf-core/security";
+import { initDatabase } from "@usethink/cf-core/db";
+import { createAdminAuth } from "@usethink/cf-core/middleware";
+import { bootstrap } from "@usethink/cf-core/bootstrap";
 ```
 
 ### 方式 2：根导入
 
 ```ts
-import { ok, fail, sha256, initDatabase, bootstrap } from "@iusethink/cf-core";
+import { ok, fail, sha256, initDatabase, bootstrap } from "@usethink/cf-core";
 ```
 
 ## 模块清单
@@ -61,8 +61,8 @@ import { ok, fail, sha256, initDatabase, bootstrap } from "@iusethink/cf-core";
 ```ts
 // src/index.ts
 import * as schema from "./db/schema";
-import { bootstrap } from "@iusethink/cf-core/bootstrap";
-import { createAdminAuth } from "@iusethink/cf-core/middleware";
+import { bootstrap } from "@usethink/cf-core/bootstrap";
+import { createAdminAuth } from "@usethink/cf-core/middleware";
 import { productRoutes } from "./routes/products";
 import { orderRoutes } from "./routes/orders";
 

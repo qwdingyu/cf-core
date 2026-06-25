@@ -1,5 +1,5 @@
 /**
- * @iusethink/cf-core — 公共数据库 Schema
+ * @usethink/cf-core — 公共数据库 Schema
  *
  * 所有项目共享的 Drizzle ORM 表定义。
  * 各项目在此基础上添加自己的业务表。

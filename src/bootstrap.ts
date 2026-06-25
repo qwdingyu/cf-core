@@ -87,7 +87,7 @@ export interface BootstrapOptions<TSchema extends Record<string, unknown> = Reco
  * @example
  * ```ts
  * import * as schema from "./db/schema";
- * import { bootstrap } from "@iusethink/cf-core/bootstrap";
+ * import { bootstrap } from "@usethink/cf-core/bootstrap";
  *
  * export default bootstrap({
  *   schema,
