@@ -96,7 +96,6 @@ jobs:
 
       - name: Publish to npm
         id: publish
-        continue-on-error: true
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ inputs.dry_run }}" = "true" ]; then
@@ -115,23 +114,17 @@ jobs:
           fi
 
       - name: Display publish result
-        if: always()
         run: |
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           
-          if [ "${{ steps.publish.outcome }}" = "success" ]; then
-            if [ "${{ steps.publish.outputs.dry_run }}" = "true" ]; then
-              echo "🧪 Dry-run 成功！"
-              echo "   包: ${PACKAGE_NAME}@${PACKAGE_VERSION}"
-              echo "   查看: https://www.npmjs.com/package/${PACKAGE_NAME}"
-            else
-              echo "✅ ${PACKAGE_NAME}@${PACKAGE_VERSION} 发布成功！"
-              echo "   查看: https://www.npmjs.com/package/${PACKAGE_NAME}"
-            fi
+          if [ "${{ steps.publish.outputs.dry_run }}" = "true" ]; then
+            echo "🧪 Dry-run 成功！"
+            echo "   包: ${PACKAGE_NAME}@${PACKAGE_VERSION}"
+            echo "   查看: https://www.npmjs.com/package/${PACKAGE_NAME}"
           else
-            echo "❌ 发布失败，请检查上方日志"
-            exit 1
+            echo "✅ ${PACKAGE_NAME}@${PACKAGE_VERSION} 发布成功！"
+            echo "   查看: https://www.npmjs.com/package/${PACKAGE_NAME}"
           fi
 
       - name: Notify failure
