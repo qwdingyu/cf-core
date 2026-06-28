@@ -4,7 +4,7 @@
  * 提供统一的 ok/fail 响应格式，以及常用的请求解析工具。
  * 泛型设计：兼容任意 Hono AppEnv 类型，无需绑定特定项目。
  *
- * 来源：eshop/xtools/vcode 三项目 lib/http.ts 合并
+ * 来源：cf-shop/xtools/vcode 三项目 lib/http.ts 合并
  */
 
 import type { Context } from "hono";
@@ -123,7 +123,7 @@ export function normalizeCode(value?: string): string {
  * CSV 注入防护 — 对导出值做安全转义
  *
  * 如果值以 = + - @ \t \n 开头，前置制表符阻止公式注入。
- * 来源：eshop admin 订单导出
+ * 来源：cf-shop admin 订单导出
  */
 export function csvEscape(value: unknown): string {
   const str = String(value ?? "");

@@ -2,7 +2,7 @@
  * 管理员认证中间件
  *
  * 支持两种认证方式：
- * 1. Bearer Token（eshop/vcode 方式）：Authorization: Bearer <token>
+ * 1. Bearer Token（cf-shop/vcode 方式）：Authorization: Bearer <token>
  * 2. 自定义 Header（xtools 方式）：X-Admin-Token: <token>
  *
  * 安全措施：
@@ -10,7 +10,7 @@
  * - 默认 Token 仅限本地地址使用
  * - 未配置 ADMIN_TOKEN 时返回 503
  *
- * 来源：eshop requireAdmin + xtools adminAuthMiddleware 合并
+ * 来源：cf-shop requireAdmin + xtools adminAuthMiddleware 合并
  */
 
 import type { Context, Next } from "hono";
@@ -20,7 +20,7 @@ import { constantTimeEqual, getBearerToken } from "../security.js";
 export interface AdminAuthOptions {
   /**
    * Token 提取方式：
-   * - "bearer" — 从 Authorization: Bearer 提取（eshop/vcode 默认）
+   * - "bearer" — 从 Authorization: Bearer 提取（cf-shop/vcode 默认）
    * - "header" — 从 X-Admin-Token 提取（xtools 默认）
    * - "both" — 两种方式都尝试（兼容模式）
    */
@@ -31,7 +31,7 @@ export interface AdminAuthOptions {
  * 创建管理员认证中间件
  *
  * @example
- * // eshop/vcode 风格
+ * // cf-shop/vcode 风格
  * app.route("/admin", new Hono().use("*", createAdminAuth()).route("/", adminRoutes));
  *
  * // xtools 风格

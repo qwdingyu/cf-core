@@ -7,7 +7,7 @@
  * - 控制 MainButton / BackButton
  * - 获取用户信息
  *
- * 来源：eshop frontend/src/composables/useTelegram.ts + usePlatform.ts
+ * 来源：cf-shop frontend/src/composables/useTelegram.ts + usePlatform.ts
  *
  * 注意：此插件为前端代码，仅在 Vue 3 项目中使用。
  * 非 Vue 项目可参考实现自行适配。

@@ -9,7 +9,7 @@
  * 2. shouldProceed === false → 返回缓存响应
  * 3. shouldProceed === true → 执行业务逻辑 → saveIdempotentResponse()
  *
- * 来源：eshop src/lib/idempotency.ts（三项目中唯一实现）
+ * 来源：cf-shop src/lib/idempotency.ts（三项目中唯一实现）
  */
 
 import { idempotencyKeys } from "./db/schema.js";

@@ -8,7 +8,7 @@
  * - API 路由 / 静态资源分流
  * - 全局错误处理
  *
- * 来源：eshop/xtools/vcode 三项目 index.ts 入口合并
+ * 来源：cf-shop/xtools/vcode 三项目 index.ts 入口合并
  */
 
 import { Hono } from "hono";

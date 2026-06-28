@@ -2,7 +2,7 @@
  * 统一限流模块 — 支持 DB / KV / 内存 三种存储后端
  *
  * 三项目的限流实现各有特点：
- * - eshop: DB 版（原子 upsert，最可靠，适合无 KV 的项目）
+ * - cf-shop: DB 版（原子 upsert，最可靠，适合无 KV 的项目）
  * - xtools: KV 版（滑动窗口，跨实例共享）
  * - vcode: 内存版（最轻量，但重启丢失）
  *
@@ -103,7 +103,7 @@ export class KvRateLimiter implements RateLimiter {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DB 版（最可靠 — 适合 eshop 类项目）
+// DB 版（最可靠 — 适合 cf-shop 类项目）
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -113,7 +113,7 @@ export class KvRateLimiter implements RateLimiter {
  * UPDATE 自带 WHERE request_count < :limit 条件，确保计数器永远不会超过阈值，
  * 从根本上消除高并发场景下的竞态条件。
  *
- * 来源：eshop src/lib/rate-limit.ts（竞态修复版）
+ * 来源：cf-shop src/lib/rate-limit.ts（竞态修复版）
  */
 export class DbRateLimiter implements RateLimiter {
   private db: {

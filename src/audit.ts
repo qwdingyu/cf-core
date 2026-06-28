@@ -5,7 +5,7 @@
  * 设计为 fire-and-forget：写入失败不阻塞主流程。
  * 内置 5% 概率自动清理旧日志，避免数据无限增长。
  *
- * 来源：eshop/vcode audit-service.ts 合并
+ * 来源：cf-shop/vcode audit-service.ts 合并
  */
 
 import { adminAuditLogs } from "./db/schema.js";

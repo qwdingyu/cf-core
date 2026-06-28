@@ -1,6 +1,6 @@
 {
   "name": "@usethink/cf-core",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Cloudflare Workers 共享内核 — Hono + Turso + Drizzle 标准化基础设施",
   "type": "module",
   "main": "dist/src/index.js",
@@ -8,10 +8,14 @@
   "files": [
     "dist/src",
     "dist/features",
+    "scripts/init-system-config.mjs",
     "src",
     "features",
     "README.md"
   ],
+  "bin": {
+    "cf-core-init-system-config": "./scripts/init-system-config.mjs"
+  },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -182,6 +186,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "type-check": "tsc --noEmit",
+    "init:system-config": "node scripts/init-system-config.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepublishOnly": "npm run type-check && npm test",
@@ -198,6 +203,6 @@
     "@cloudflare/workers-types": "^4.20260524.1",
     "@usethink/publish-toolkit": "^0.1.8",
     "typescript": "^5.7.0",
-    "vitest": "^2.1.0"
+    "vitest": "^4.1.9"
   }
 }

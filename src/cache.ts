@@ -9,13 +9,13 @@
  * - GET /system-config（系统配置，TTL 30 分钟）
  * - 任何读多写少的 API 响应
  *
- * 来源：eshop src/lib/cache.ts
+ * 来源：cf-shop src/lib/cache.ts
  */
 
 /**
  * 创建命名空间化的 Cache 实例。
  *
- * @param namespace - 缓存命名空间（通常为项目名，如 "eshop-v1"）
+ * @param namespace - 缓存命名空间（通常为项目名，如 "cf-shop-v1"）
  */
 export function createCache(namespace: string) {
   function key(path: string, query?: string): string {

@@ -6,7 +6,7 @@
  * 缓存 client 实例避免每次请求重新 createClient（节省 ~1ms CPU）。
  *
  * 合并自：
- * - eshop: src/db/database.ts + src/db/client.ts
+ * - cf-shop: src/db/database.ts + src/db/client.ts
  * - xtools: src/db/database.ts + src/db/client.ts
  * - vcode: src/db/index.ts（含自动迁移）
  */

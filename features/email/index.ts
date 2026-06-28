@@ -6,7 +6,7 @@
  * - 3 次重试（指数退避）
  * - 邮件日志记录（可选，需传入 Drizzle DB 实例）
  *
- * 来源：eshop src/services/email-service.ts
+ * 来源：cf-shop src/services/email-service.ts
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════

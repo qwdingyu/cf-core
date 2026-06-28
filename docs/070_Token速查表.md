@@ -38,12 +38,21 @@
 | `JWT_SECRET` | Step 02 自动生成 | JWT 签名密钥 | `signJwt()` / `verifyJwt()` |
 | `CREDENTIALS_ENCRYPTION_KEY` | Step 02 自动生成（64 hex = 256 bit） | AES-256-GCM 加解密 | `encrypt()` / `decrypt()` |
 
-### 2.3 可选运行时 Secret（按需配置）
+### 2.3 system_config 公开运行时配置
+
+| 名称 | 来源 | 用途 | 使用模块 |
+|------|------|------|---------|
+| `PROJECT_NAME` | Step 06 写入 | 项目标识，统一使用 `cf-shop` 模板命名 | Web / 管理后台展示 |
+| `WORKER_NAME` | Step 06 写入 | Worker 服务名 | 管理后台诊断 |
+| `DOMAIN` | Step 06 写入 | 对外域名，例如 `shop.eforge.xyz` | Web / 管理后台跳转 |
+| `BASE_URL` | Step 06 写入 | 对外基础 URL | Web / 管理后台 API 地址 |
+| `TURNSTILE_SITE_KEY` | Step 05 创建、Step 06 写入 | 前端 Turnstile Widget 公开 key | Web 表单 |
+
+### 2.4 可选运行时 Secret（按需配置）
 
 | 名称 | 来源 | 用途 | 使用模块 |
 |------|------|------|---------|
 | `TURNSTILE_SECRET_KEY` | Step 05 自动创建 | Turnstile 人机验证 | `verifyTurnstile()` |
-| `TURNSTILE_SITE_KEY` | Step 05 自动创建 | 前端 Turnstile Widget | 写入 `system_config` 表 |
 | `RESEND_API_KEY` | [Resend Dashboard](https://resend.com/api-keys) | 邮件发送 | `EmailService` |
 | `EMAIL_FROM` | 手动配置 | 邮件发件人 | `EmailService` |
 | `ALIPAY_APP_ID` | [支付宝开放平台](https://open.alipay.com) | 支付宝当面付 | `AlipayProvider` |
@@ -58,8 +67,8 @@
 
 | ❌ 错误命名 | ✅ 正确命名 | 说明 |
 |------------|------------|------|
-| `TURSO_DB_URL` | `TURSO_URL` | eshop 旧脚本用过 |
-| `TURSO_DB_AUTH_TOKEN` | `TURSO_TOKEN` | eshop 旧 GitHub Actions 用过 |
+| `TURSO_DB_URL` | `TURSO_URL` | cf-shop 旧脚本用过 |
+| `TURSO_DB_AUTH_TOKEN` | `TURSO_TOKEN` | cf-shop 旧 GitHub Actions 用过 |
 | `TURSO_AUTH_TOKEN` | `TURSO_TOKEN` | 容易混淆 |
 | `CF_API_TOKEN` | `CLOUDFLARE_API_TOKEN` | vcode 旧 CI 用过 |
 | `CF_AUTH_EMAIL` + `CF_GLOBAL_API_KEY` | `CLOUDFLARE_API_TOKEN` | 旧认证方式 |
@@ -70,7 +79,8 @@
 
 1. **部署脚本** `templates/.deploy/*.sh` — Secret 生成和上传的权威来源
 2. **cf-core** `packages/cf-core/src/` — 运行时 API 参数名的权威来源
-3. **bindings.ts** — 每个模板的 `src/bindings.ts` 必须与上述两者一致
+3. **`cf-core-init-system-config`** — `system_config` 公开配置初始化的权威入口
+4. **bindings.ts** — 每个模板的 `src/bindings.ts` 必须与上述两者一致
 
 ---
 
@@ -81,7 +91,7 @@
 ─────────                  ────────                      ────────────
 
 CLOUDFLARE_API_TOKEN ───→ 03/04/05 步骤 ───→ CF API（部署/域名/Turnstile）
-                         06 步骤 ────────→ GitHub Actions Secret
+                         07 步骤 ────────→ GitHub Actions Secret
 
 TURSO_API_TOKEN ───────→ 01 步骤 ────────→ Turso API（创建数据库）
                          │
@@ -104,7 +114,14 @@ TURSO_API_TOKEN ───────→ 01 步骤 ────────→ T
                                                          c.env.RATE_LIMIT_SALT
                                                          c.env.JWT_SECRET
                                                          c.env.CREDENTIALS_ENCRYPTION_KEY
+
+05/06 步骤公开配置 ────→ .credentials/TURNSTILE_SITE_KEY ──→ system_config
+                         .credentials/DOMAIN                  │
+                         .credentials/BASE_URL                ↓
+                                                         Web / 管理后台读取
 ```
+
+`system_config` 只能存公开运行时配置。`SECRET`、`TOKEN`、`PASSWORD`、`PRIVATE`、`CREDENTIAL`、`AUTH`、`API_KEY` 等敏感值必须保留在 Worker Secret 或 GitHub Actions Secret。
 
 ---
 
@@ -114,6 +131,7 @@ TURSO_API_TOKEN ───────→ 01 步骤 ────────→ T
 |---------|------|------|
 | `TURSO_URL is required` | Worker 中未设置 `TURSO_URL` | 检查 `wrangler secret list`，重新运行 `03-deploy-worker.sh` |
 | `database not initialized` | `TURSO_URL` 或 `TURSO_TOKEN` 无效 | 检查 Turso Dashboard 数据库状态 |
+| Web 端或管理后台缺少站点配置 | `system_config` 未初始化 | 运行 `npx cf-core-init-system-config --credentials-dir .credentials` |
 | `ADMIN_TOKEN 未配置` | Worker 中未设置 `ADMIN_TOKEN` | `02-setup-secrets.sh` 未运行或 `03` 未上传 |
 | `加密密钥必须为 64 字符 hex` | `CREDENTIALS_ENCRYPTION_KEY` 长度不对 | 重新运行 `02-setup-secrets.sh` |
 | `Alipay callback signature invalid` | `ALIPAY_PUBLIC_KEY` 不正确 | 检查支付宝开放平台公钥配置 |

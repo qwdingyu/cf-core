@@ -11,7 +11,7 @@
  * 4. idempotencyKeys — 幂等键（防重复提交）
  * 5. apiKeys — API Key 认证（可选启用）
  *
- * 来源：eshop/xtools/vcode 三项目 schema.ts 中公共部分提取
+ * 来源：cf-shop/xtools/vcode 三项目 schema.ts 中公共部分提取
  */
 
 import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";

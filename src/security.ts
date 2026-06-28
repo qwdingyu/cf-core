@@ -2,7 +2,7 @@
  * 安全工具模块
  *
  * 提供 SHA-256 哈希、IP 哈希（加盐）、时序安全比较、Turnstile 人机验证、安全响应头。
- * 合并自 eshop/xtools/vcode 三项目的 security.ts，取各版本之长。
+ * 合并自 cf-shop/xtools/vcode 三项目的 security.ts，取各版本之长。
  *
  * 设计要点：
  * - 纯函数/泛型 Context，不绑定特定项目的 AppEnv
@@ -35,7 +35,7 @@ export async function sha256(input: string): Promise<string> {
  * 使用 crypto.subtle.timingSafeEqual 比较两个字符串的 UTF-8 字节序列。
  * 长度不匹配时回退到手写比较（仍为恒定时间），避免长度泄露信息。
  *
- * 来源：eshop（crypto.subtle 版）+ xtools（手写 XOR 版）合并
+ * 来源：cf-shop（crypto.subtle 版）+ xtools（手写 XOR 版）合并
  */
 export function constantTimeEqual(a: string, b: string): boolean {
   const aBuf = encoder.encode(a);
@@ -114,7 +114,7 @@ export function getBearerToken(c: Context): string {
  * - 无 token 时静默通过（smoke 测试/管理端调用）
  * - 验证失败返回 { ok: false, message }
  *
- * 来源：eshop（FormData 版）+ vcode（urlencoded 版）合并为 FormData 版（更规范）
+ * 来源：cf-shop（FormData 版）+ vcode（urlencoded 版）合并为 FormData 版（更规范）
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function verifyTurnstile(

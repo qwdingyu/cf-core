@@ -2,7 +2,7 @@
 
 Cloudflare Workers 共享内核 — Hono + Turso + Drizzle 标准化基础设施。
 
-从 eshop / xtools / vcode 三个项目中提取的公共代码，为批量产品复制提供统一基础。
+从 cf-shop / xtools / vcode 三个项目中提取的公共代码，为批量产品复制提供统一基础。
 
 ## 快速开始
 
@@ -79,6 +79,16 @@ export default bootstrap({
   immutablePrefixes: ["/_app/assets/"],
 });
 ```
+
+## 初始化 system_config
+
+部署 `cf-shop` 模板时，Web 端和管理后台需要少量公开运行时配置。部署脚本生成 `.credentials/` 后运行：
+
+```bash
+npx cf-core-init-system-config --credentials-dir .credentials
+```
+
+脚本会幂等写入 `PROJECT_NAME`、`WORKER_NAME`、`DOMAIN`、`BASE_URL`、`TURNSTILE_SITE_KEY`，并默认拒绝把 Secret/Token 类字段写入 `system_config`。域名示例保持为 `shop.eforge.xyz`，项目/模板命名统一使用 `cf-shop`。
 
 ## 设计原则
 

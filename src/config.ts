@@ -6,7 +6,7 @@
  *
  * 三项目均有 system_config 表且结构完全一致。
  *
- * 来源：eshop/xtools/vcode system_config 表 + eshop cache.ts 合并
+ * 来源：cf-shop/xtools/vcode system_config 表 + cf-shop cache.ts 合并
  */
 
 import { eq } from "drizzle-orm";

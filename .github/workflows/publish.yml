@@ -121,7 +121,7 @@ jobs:
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           
           if [ "${{ steps.publish.outcome }}" = "success" ]; then
-            if [ "${{ steps.publish.output.dry_run }}" = "true" ]; then
+            if [ "${{ steps.publish.outputs.dry_run }}" = "true" ]; then
               echo "🧪 Dry-run 成功！"
               echo "   包: ${PACKAGE_NAME}@${PACKAGE_VERSION}"
               echo "   查看: https://www.npmjs.com/package/${PACKAGE_NAME}"
