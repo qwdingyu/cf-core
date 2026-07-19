@@ -55,6 +55,8 @@ import { ok, fail, sha256, initDatabase, bootstrap } from "@usethink/cf-core";
 | **error** | `/error` | classifyError + retryWithBackoff |
 | **logger** | `/logger` | 结构化 JSON 日志 |
 | **crypto** | `/crypto` | AES-256-GCM 加解密、generateUUID |
+| **features/payment** | `/features/payment` | Provider/Registry、按币种渠道选择、主动对账类型 |
+| **payment currency** | `/features/payment/currency` | 严格主单位/最小单位转换与币种能力判断 |
 
 ## 新项目模板使用
 

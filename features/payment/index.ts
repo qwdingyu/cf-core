@@ -24,6 +24,20 @@ export type {
   ProviderFactory,
 } from "./types.js";
 
+// ── 币种与整数最小单位 ──
+export {
+  assertCurrencySupported,
+  assertSafeMinorUnits,
+  formatProviderMajorAmount,
+  minorToMajorString,
+  normalizeCurrencyCode,
+  parseMajorToMinor,
+  parseProviderMajorAmount,
+  providerSupportsCurrency,
+  selectPaymentProviderForCurrency,
+} from "./currency.js";
+export type { CurrencyExponentMap } from "./currency.js";
+
 // ── 注册表 ──
 export { createProviderRegistry } from "./registry.js";
 export type { DbProviderConfig, DbProviderConfigMap } from "./registry.js";

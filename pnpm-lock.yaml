@@ -28,8 +28,8 @@ importers:
         specifier: ^4.20260524.1
         version: 4.20260624.1
       '@usethink/publish-toolkit':
-        specifier: ^0.1.8
-        version: 0.1.8
+        specifier: ^0.1.15
+        version: 0.1.15
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -426,8 +426,8 @@ packages:
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
-  '@usethink/publish-toolkit@0.1.8':
-    resolution: {integrity: sha512-Jj6eNaR2MWj6UvvzXsRfYOgBQuuErMou/LuojIDi73TSF1l3dZGyGUS1UP8o6Y83Lz4Z5aq8xNzFtBo5vypMcA==}
+  '@usethink/publish-toolkit@0.1.15':
+    resolution: {integrity: sha512-o23Oqh9K1aVubvhxM09WEXMAZjlza3ZulY2hFPe/G/NBCw2jOgY0gGhHP9mszqngh6+F8BeTao6rqO2IWjydQg==}
     hasBin: true
 
   '@vercel/blob@2.4.1':
@@ -1549,7 +1549,7 @@ snapshots:
     dependencies:
       '@types/node': 26.0.0
 
-  '@usethink/publish-toolkit@0.1.8':
+  '@usethink/publish-toolkit@0.1.15':
     dependencies:
       chalk: 5.6.2
       commander: 12.1.0

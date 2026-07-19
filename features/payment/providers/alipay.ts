@@ -16,6 +16,10 @@ import type {
   ProviderFactory,
 } from "../types.js";
 import { fetchWithRetry } from "../fetch-utils.js";
+import { formatProviderMajorAmount, parseProviderMajorAmount } from "../currency.js";
+
+const ALIPAY_SUPPORTED_CURRENCIES = ["CNY"] as const;
+const ALIPAY_CURRENCY_EXPONENTS = { CNY: 2 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // RSA2 签名工具（Web Crypto API，零依赖）
@@ -90,14 +94,20 @@ export interface AlipayConfig {
 export class AlipayProvider implements PaymentProvider {
   readonly name = "alipay";
   readonly displayName = "支付宝当面付";
-  readonly supportedCurrencies = ["CNY"];
+  readonly supportedCurrencies = [...ALIPAY_SUPPORTED_CURRENCIES];
 
   constructor(private readonly config: AlipayConfig) {}
 
   async createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult> {
+    const totalAmount = formatProviderMajorAmount(
+      input.amountCents,
+      input.currency,
+      ALIPAY_SUPPORTED_CURRENCIES,
+      ALIPAY_CURRENCY_EXPONENTS,
+    );
     const bizContent = JSON.stringify({
       out_trade_no: input.orderNo,
-      total_amount: (input.amountCents / 100).toFixed(2),
+      total_amount: totalAmount,
       subject: input.metadata?.subject || input.description || "商品购买",
     });
     const timestamp = new Date().toISOString().replace("T", " ").substring(0, 19);
@@ -128,7 +138,12 @@ export class AlipayProvider implements PaymentProvider {
     if (params.trade_status !== "TRADE_SUCCESS") throw new Error(`Unexpected trade_status: ${params.trade_status}`);
     return {
       orderNo: params.out_trade_no, providerTradeNo: params.trade_no,
-      amountCents: Math.round(parseFloat(params.total_amount || "0") * 100),
+      amountCents: parseProviderMajorAmount(
+        params.total_amount || "",
+        "CNY",
+        ALIPAY_SUPPORTED_CURRENCIES,
+        ALIPAY_CURRENCY_EXPONENTS,
+      ),
       currency: "CNY", paidAt: params.gmt_payment || new Date().toISOString(),
     };
   }

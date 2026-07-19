@@ -11,6 +11,7 @@
 
 export interface CreatePaymentInput {
   orderNo: string;
+  /** Legacy field name. The value is the integer minor unit of `currency`, not always a cent. */
   amountCents: number;
   currency: string;
   notifyUrl: string;
@@ -29,6 +30,7 @@ export interface CreatePaymentResult {
 export interface CallbackResult {
   orderNo: string;
   providerTradeNo: string;
+  /** Legacy field name. The value is the integer minor unit of `currency`. */
   amountCents: number;
   currency: string;
   paidAt: string;
@@ -38,10 +40,16 @@ export interface CallbackResult {
 export interface QueryStatusResult {
   paid: boolean;
   providerTradeNo?: string;
+  providerCreatedAt?: string;
+  paidAt?: string;
+  amountCents?: number;
+  currency?: string;
+  raw?: Record<string, unknown>;
 }
 
 export interface RefundInput {
   providerTradeNo: string;
+  /** Legacy field name. The value is the integer minor unit of the order currency. */
   refundCents: number;
   reason?: string;
   refundNo?: string;
@@ -73,7 +81,7 @@ export interface PaymentProvider {
 
 export interface ProviderRegistry {
   get(name: string): PaymentProvider | undefined;
-  selectOnline(): PaymentProvider | null;
+  selectOnline(currency?: string): PaymentProvider | null;
   list(): string[];
 }
 

@@ -16,6 +16,7 @@ import type {
   ProviderFactory,
 } from "../types.js";
 import { fetchWithRetry } from "../fetch-utils.js";
+import { assertCurrencySupported, assertSafeMinorUnits } from "../currency.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 工具函数
@@ -44,7 +45,9 @@ export class Trc20Provider implements PaymentProvider {
   ) {}
 
   async createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult> {
-    const amount = (input.amountCents / 100).toFixed(6);
+    assertCurrencySupported(input.currency, this.supportedCurrencies);
+    const legacyTwoDecimalAmount = assertSafeMinorUnits(input.amountCents, true);
+    const amount = (legacyTwoDecimalAmount / 100).toFixed(6);
     const memo = generateMemo(input.orderNo);
     return {
       raw: {

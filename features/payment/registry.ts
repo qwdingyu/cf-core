@@ -19,6 +19,7 @@
  */
 
 import type { PaymentProvider, ProviderFactory, ProviderRegistry } from "./types.js";
+import { selectPaymentProviderForCurrency } from "./currency.js";
 
 /** DB 加密支付配置的扁平键值对结构 */
 export interface DbProviderConfig {
@@ -75,12 +76,10 @@ export function createProviderRegistry(
 
   return {
     get(name) { return registry.get(name); },
-    selectOnline() {
-      for (const f of sorted) {
-        const p = registry.get(f.name);
-        if (p) return p;
-      }
-      return null;
+    selectOnline(currency) {
+      const providers = sorted.map((factory) => registry.get(factory.name));
+      if (currency !== undefined) return selectPaymentProviderForCurrency(providers, currency);
+      return providers.find((provider): provider is PaymentProvider => Boolean(provider)) || null;
     },
     list() { return [...registry.keys()]; },
   };

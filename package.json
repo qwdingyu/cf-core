@@ -1,6 +1,6 @@
 {
   "name": "@usethink/cf-core",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Cloudflare Workers 共享内核 — Hono + Turso + Drizzle 标准化基础设施",
   "type": "module",
   "main": "dist/src/index.js",
@@ -154,6 +154,13 @@
         "default": "./dist/features/payment/index.js"
       }
     },
+    "./features/payment/currency": {
+      "types": "./dist/features/payment/currency.d.ts",
+      "import": {
+        "development": "./features/payment/currency.ts",
+        "default": "./dist/features/payment/currency.js"
+      }
+    },
     "./features/email": {
       "types": "./dist/features/email/index.d.ts",
       "import": {
@@ -201,7 +208,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260524.1",
-    "@usethink/publish-toolkit": "^0.1.8",
+    "@usethink/publish-toolkit": "^0.1.15",
     "typescript": "^5.7.0",
     "vitest": "^3.2.6"
   }

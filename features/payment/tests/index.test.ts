@@ -55,11 +55,11 @@ async function generateTestKeys() {
 }
 
 // ── 模拟 PaymentProvider ──
-function mockProvider(name: string): PaymentProvider {
+function mockProvider(name: string, supportedCurrencies = ["CNY"]): PaymentProvider {
   return {
     name,
     displayName: name,
-    supportedCurrencies: ["CNY"],
+    supportedCurrencies,
     createPayment: vi.fn(),
     verifyCallback: vi.fn(),
   };
@@ -103,6 +103,19 @@ describe("ProviderRegistry", () => {
     ]);
     const selected = reg.selectOnline();
     expect(selected?.name).toBe("alipay"); // priority 100 < 200
+  });
+
+  it("传入币种时按优先级跳过不支持该币种的 provider", () => {
+    const factories: ProviderFactory[] = [
+      { ...mockFactory("cny", 100, true), create: () => mockProvider("cny", ["CNY"]) },
+      { ...mockFactory("global", 200, true), create: () => mockProvider("global", ["USD", "JPY"]) },
+    ];
+    const reg = createProviderRegistry({}, factories);
+
+    expect(reg.selectOnline("CNY")?.name).toBe("cny");
+    expect(reg.selectOnline("JPY")?.name).toBe("global");
+    expect(reg.selectOnline("EUR")).toBeNull();
+    expect(reg.selectOnline("")).toBeNull();
   });
 
   it("高优先级不可用 → 选低优先级", () => {
@@ -227,6 +240,19 @@ describe("AlipayProvider", () => {
       provider.verifyCallback({ sign: "invalid", app_id: "test-app", trade_status: "TRADE_SUCCESS" }),
     ).rejects.toThrow();
   });
+
+  it("createPayment 在签名和网络请求前拒绝非 CNY 币种", async () => {
+    const provider = new AlipayProvider({ appId: "test-app", privateKey: "invalid", alipayPublicKey: "invalid" });
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+
+    await expect(provider.createPayment({
+      orderNo: "ORDER-USD",
+      amountCents: 100,
+      currency: "USD",
+      notifyUrl: "https://example.com/callback",
+    })).rejects.toThrow("does not support USD");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -287,6 +313,19 @@ describe("StripeProvider", () => {
     expect(callArgs[1].method).toBe("POST");
     expect(callArgs[1].headers["Authorization"]).toBe("Bearer sk_test");
     expect(callArgs[1].body).toContain("ORD001");
+  });
+
+  it("createPayment 在网络请求前拒绝未声明支持的币种", async () => {
+    const provider = new StripeProvider("sk_test", "whsec_test");
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+
+    await expect(provider.createPayment({
+      orderNo: "ORD-CNY",
+      amountCents: 2999,
+      currency: "CNY",
+      notifyUrl: "https://example.com/pay/callback",
+    })).rejects.toThrow("does not support CNY");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it("createPayment API 错误时抛错", async () => {
@@ -441,6 +480,22 @@ describe("Trc20Provider", () => {
     expect(result.raw!.memo).toBe("00001234");
     expect(result.raw!.network).toBe("TRC20");
     expect(result.raw!.warnings).toHaveLength(3);
+  });
+
+  it("createPayment 拒绝非 USDT 币种和非正整数金额", async () => {
+    const provider = new Trc20Provider("TXYZ123", "key123");
+    await expect(provider.createPayment({
+      orderNo: "ORD-USD",
+      amountCents: 100,
+      currency: "USD",
+      notifyUrl: "https://example.com/pay/callback",
+    })).rejects.toThrow("does not support USD");
+    await expect(provider.createPayment({
+      orderNo: "ORD-ZERO",
+      amountCents: 0,
+      currency: "USDT",
+      notifyUrl: "https://example.com/pay/callback",
+    })).rejects.toThrow("greater than zero");
   });
 
   it("createPayment 从订单号提取数字 Memo", async () => {

@@ -4,6 +4,7 @@
 
 - `PaymentProvider` 接口（统一支付渠道抽象）
 - `ProviderRegistry` + `ProviderFactory`（per-request 工厂）
+- 严格的币种代码、整数最小单位转换与 Provider 币种能力工具
 - `AlipayProvider`（支付宝当面付，RSA2 签名，优先级 100）
 - `StripeProvider`（Stripe Checkout Sessions，国际信用卡，优先级 200）
 - `Trc20Provider`（USDT/TRC20 零资质加密支付，单地址+Memo 模式，优先级 300）
@@ -101,6 +102,9 @@ const registry = createProviderRegistry(env, [
 // 按优先级选择第一个可用的线上渠道（alipay > stripe > usdt_trc20）
 const provider = registry.selectOnline();
 
+// 按订单币种选择；不支持该币种的高优先级渠道会被跳过
+const jpyProvider = registry.selectOnline("JPY");
+
 // 按名称获取指定渠道
 const alipay = registry.get("alipay");
 
@@ -125,8 +129,35 @@ const channels = registry.list(); // ["alipay", "stripe", ...]
 1. **纯类、零框架依赖** — 所有 Provider 可在任何 JavaScript 环境使用（Workers / Node / Deno / Bun）
 2. **per-request 实例化** — `createProviderRegistry` 每次请求调用，避免全局状态泄漏
 3. **统一接口** — `createPayment` → `verifyCallback` / `queryStatus`，应用层无需区分渠道
-4. **金额统一分** — 所有金额以 `cents`（分）为单位，无浮点精度问题
+4. **金额使用整数最小单位** — `amountCents` 是兼容字段名，真实语义由订单币种指数决定；JPY 为整数日元，CNY/USD 为分
 5. **工厂模式** — 新渠道只需实现 `PaymentProvider` + `ProviderFactory`，注册即可使用
+
+## 币种与金额边界
+
+新代码应从独立子路径导入纯函数，避免把 Provider 实现打进前端包：
+
+```ts
+import {
+  formatProviderMajorAmount,
+  parseMajorToMinor,
+  selectPaymentProviderForCurrency,
+} from "@usethink/cf-core/features/payment/currency";
+
+const exponents = { CNY: 2, USD: 2, JPY: 0 } as const;
+parseMajorToMinor("9.90", "CNY", exponents); // 990
+parseMajorToMinor("500", "JPY", exponents); // 500
+
+const amount = formatProviderMajorAmount(990, "CNY", ["CNY"], exponents); // "9.90"
+const provider = selectPaymentProviderForCurrency(orderedProviders, "CNY");
+```
+
+约束：
+
+- 持久化和支付比较使用安全整数，不使用浮点数。
+- 未配置指数的币种、科学计数法、千分位、超精度和非安全整数全部 fail closed。
+- Provider 在创建支付前必须验证 `supportedCurrencies`，不能把相同数字换一种币种提交。
+- `QueryStatusResult` 可以返回 `amountCents`、`currency`、`paidAt` 和 `providerCreatedAt`，便于调用方做主动对账。
+- TRC20 Provider 在 `0.3.x` 为兼容历史调用仍把 `amountCents` 按两位小数解释；它不代表 USDT 的 6 位链上最小单位。修正该历史契约需要单独的破坏性版本，不能在 patch 版本静默改变。
 
 ## 添加新支付渠道
 

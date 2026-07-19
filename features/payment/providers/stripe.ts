@@ -16,6 +16,7 @@ import type {
   ProviderFactory,
 } from "../types.js";
 import { fetchWithRetry } from "../fetch-utils.js";
+import { assertCurrencySupported, assertSafeMinorUnits } from "../currency.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Stripe API 常量
@@ -89,15 +90,17 @@ export class StripeProvider implements PaymentProvider {
    * 兼容 Workers 环境（无 Node.js 内置模块）。
    */
   async createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult> {
+    const currency = assertCurrencySupported(input.currency, this.supportedCurrencies);
+    const amountMinor = assertSafeMinorUnits(input.amountCents, true);
     const origin = (() => {
       try { return new URL(input.notifyUrl).origin; } catch { return "https://localhost"; }
     })();
 
     const params = new URLSearchParams({
       mode: "payment",
-      "line_items[0][price_data][currency]": input.currency.toLowerCase(),
+      "line_items[0][price_data][currency]": currency.toLowerCase(),
       "line_items[0][price_data][product_data][name]": input.metadata?.subject || "商品购买",
-      "line_items[0][price_data][unit_amount]": String(input.amountCents),
+      "line_items[0][price_data][unit_amount]": String(amountMinor),
       "line_items[0][quantity]": "1",
       "metadata[order_no]": input.orderNo,
       success_url: `${origin}/lookup?session_id={CHECKOUT_SESSION_ID}`,
