@@ -45,7 +45,7 @@ import { ok, fail, sha256, initDatabase, bootstrap } from "@usethink/cf-core";
 | **db/schema** | `/db/schema` | systemConfig、adminAuditLogs、rateLimitWindows、idempotencyKeys、apiKeys |
 | **rate-limit** | `/rate-limit` | MemoryRateLimiter / KvRateLimiter / DbRateLimiter |
 | **cache** | `/cache` | Workers Cache API 封装（Free 套餐不计入请求配额） |
-| **idempotency** | `/idempotency` | 原子 UPSERT + 哨兵值幂等保护 |
+| **idempotency** | `/idempotency` | 复合主键 + requestHash 绑定 + pending 租约 fencing（兼容旧 3/5 参签名） |
 | **audit** | `/audit` | fire-and-forget 审计日志 |
 | **config** | `/config` | SystemConfig 类（运行时 KV 配置，热生效） |
 | **bootstrap** | `/bootstrap` | Worker 入口工厂（DB 中间件 + 安全头 + 路由分流） |

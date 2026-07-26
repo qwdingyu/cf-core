@@ -33,7 +33,19 @@ export { createCache, cache } from "./cache.js";
 export { MemoryRateLimiter, KvRateLimiter, DbRateLimiter, type RateLimiter } from "./rate-limit.js";
 
 // ── 幂等性 ──
-export { checkIdempotency, saveIdempotentResponse, getIdempotentResponse } from "./idempotency.js";
+export {
+  checkIdempotency,
+  saveIdempotentResponse,
+  getIdempotentResponse,
+  clearPendingIdempotency,
+  clearCachedIdempotentResponse,
+  hashIdempotencyRequest,
+  isStrongIdempotencyKey,
+  IDEMPOTENCY_PENDING_LEASE_MS,
+  STRONG_IDEMPOTENCY_KEY_PATTERN,
+  type IdempotencyCheckResult,
+  type IdempotencyDb,
+} from "./idempotency.js";
 
 // ── 审计日志 ──
 export { writeAdminAudit, type AuditInput } from "./audit.js";
