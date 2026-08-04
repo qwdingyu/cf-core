@@ -148,3 +148,6 @@ export function toCsv(rows: Record<string, unknown>[], columns: string[]): strin
   ).join("\n");
   return `${header}\n${body}`;
 }
+
+// Re-export pure helpers so consumers can import from @usethink/cf-core/http
+export { clampInteger, isValidEmail } from "./utils.js";

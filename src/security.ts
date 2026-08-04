@@ -49,6 +49,40 @@ export function constantTimeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+/**
+ * 比较两个 hex 字符串是否相等（忽略大小写；非法字符按 0 处理，仍走完整扫描）。
+ * 用于 password/OTP/codeHash 等「机密 hex」判断；长度不同也扫完再合并 length 差。
+ */
+export function timingSafeEqualHex(a: string, b: string): boolean {
+  const left = (a || "").toLowerCase();
+  const right = (b || "").toLowerCase();
+  const len = Math.max(left.length, right.length);
+  let diff = left.length === right.length ? 0 : 1;
+  for (let i = 0; i < len; i++) {
+    const ca = i < left.length ? left.charCodeAt(i) : 0;
+    const cb = i < right.length ? right.charCodeAt(i) : 0;
+    diff |= ca ^ cb;
+  }
+  return diff === 0;
+}
+
+/**
+ * 通用 UTF-8 字符串常量时间比较（用于非 hex 机密，如 legacy 整串 hash、CRON_SECRET）。
+ * 与 constantTimeEqual 的差异：长度不等时仍完整扫描，并把长度差并入 diff（更保守）。
+ */
+export function timingSafeEqualString(a: string, b: string): boolean {
+  const left = a || "";
+  const right = b || "";
+  const len = Math.max(left.length, right.length);
+  let diff = left.length === right.length ? 0 : 1;
+  for (let i = 0; i < len; i++) {
+    const ca = i < left.length ? left.charCodeAt(i) : 0;
+    const cb = i < right.length ? right.charCodeAt(i) : 0;
+    diff |= ca ^ cb;
+  }
+  return diff === 0;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // IP 哈希
 // ═══════════════════════════════════════════════════════════════════════════════

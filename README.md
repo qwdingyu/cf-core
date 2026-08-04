@@ -39,8 +39,12 @@ import { ok, fail, sha256, initDatabase, bootstrap } from "@usethink/cf-core";
 
 | 模块 | 子路径 | 功能 |
 |------|--------|------|
-| **http** | `/http` | ok/fail 响应、maskContact、csvEscape、toCsv |
-| **security** | `/security` | sha256、constantTimeEqual、getIpHash、verifyTurnstile、buildSecurityHeaders |
+| **http** | `/http` | ok/fail 响应、maskContact、csvEscape、toCsv；并 re-export `clampInteger` / `isValidEmail` |
+| **security** | `/security` | sha256、constantTimeEqual、timingSafeEqualHex/String、getIpHash、verifyTurnstile、buildSecurityHeaders |
+| **media-image** | `/media-image` | 图片魔数检测/校验/R2 key 约束（`maxBytes` 与文案由产品注入） |
+| **api-body-limit** | `/api-body-limit` | 路径→body 上限工厂、multipart 开销；流式 `readRequestBodyWithinLimit`（防 chunked 绕过） |
+| **secret-config** | `/secret-config` | 敏感配置版本化加密：新写 `enc:v2:corejson:`；双读 v1 core-json / raw；可观测解密 |
+| **utils** | `/utils` | 无业务语义小工具：`clampInteger`、`isValidEmail` |
 | **db** | `/db` | initDatabase（Isolate 级连接复用）、公共 Schema |
 | **db/schema** | `/db/schema` | systemConfig、adminAuditLogs、rateLimitWindows、idempotencyKeys、apiKeys |
 | **rate-limit** | `/rate-limit` | MemoryRateLimiter / KvRateLimiter / DbRateLimiter |
@@ -49,7 +53,7 @@ import { ok, fail, sha256, initDatabase, bootstrap } from "@usethink/cf-core";
 | **audit** | `/audit` | fire-and-forget 审计日志 |
 | **config** | `/config` | SystemConfig 类（运行时 KV 配置，热生效） |
 | **bootstrap** | `/bootstrap` | Worker 入口工厂（DB 中间件 + 安全头 + 路由分流） |
-| **auth/jwt** | `/auth/jwt` | JWT 签发/验证（HMAC-SHA256，纯 Web Crypto） |
+| **auth/jwt** | `/auth/jwt` | JWT 签发/验证（HMAC-SHA256，固定 `sub`+`email` payload；多租户 claims 见下方边界） |
 | **auth/password** | `/auth/password` | PBKDF2 密码哈希 |
 | **middleware** | `/middleware` | createAdminAuth / createApiKeyAuth |
 | **error** | `/error` | classifyError + retryWithBackoff |
@@ -57,6 +61,41 @@ import { ok, fail, sha256, initDatabase, bootstrap } from "@usethink/cf-core";
 | **crypto** | `/crypto` | AES-256-GCM 加解密、generateUUID |
 | **features/payment** | `/features/payment` | Provider/Registry、按币种渠道选择、主动对账类型 |
 | **payment currency** | `/features/payment/currency` | 严格主单位/最小单位转换与币种能力判断 |
+
+### A′ 边界（与产品族对齐时请遵守）
+
+- **会进 core**：纯函数、版本化加密封装、媒体魔数校验、body 上限工厂与流式闸门。
+- **暂不进 / 禁止整包替换**：业务域（订单/抽奖/租户 RBAC）、限流表合并、HTTP fail 的 `error` vs `message` 全站契约迁移。
+- **JWT**：当前 `signJwt(userId, email, …)` 固定 payload，**不能**直接替换需要 `tenantId` 等自定义 claims 的产品会话；generic claims API 属于后续 Phase B′。
+- **Admin UI**：Vue 管理端共性在独立包 `@usethink/cf-admin`，**不**并入本库。
+
+### 敏感配置与 body 闸门示例
+
+```ts
+import {
+  encryptSecretConfigValue,
+  decryptSecretConfigValueObserved,
+} from "@usethink/cf-core/secret-config";
+import {
+  createApiBodyLimitResolver,
+  isContentLengthOverLimit,
+  readRequestBodyWithinLimit,
+  rebuildRequestWithBody,
+} from "@usethink/cf-core/api-body-limit";
+import { validateMediaImage } from "@usethink/cf-core/media-image";
+
+// 新写入始终 v2；读路径用 Observed 以便解密失败可打日志（不传明文）
+const cipher = await encryptSecretConfigValue(secret, encryptionKeyHex);
+const plain = await decryptSecretConfigValueObserved(cipher, encryptionKeyHex, (e) => {
+  console.warn("[secret-config]", e.reason);
+});
+
+const getLimit = createApiBodyLimitResolver({
+  defaultBytes: 100 * 1024,
+  mediaUploadBytes: 5 * 1024 * 1024 + 64 * 1024,
+  mediaUploadPath: "/admin/media/images",
+});
+```
 
 ## 新项目模板使用
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sha256, constantTimeEqual, getBearerToken } from "../src/security.js";
+import { sha256, constantTimeEqual, timingSafeEqualHex, timingSafeEqualString, getBearerToken } from "../src/security.js";
 
 describe("sha256", () => {
   it("空字符串", async () => {
@@ -58,5 +58,25 @@ describe("getBearerToken", () => {
       req: { header: (name: string) => name === "authorization" ? "Basic abc" : undefined },
     } as any;
     expect(getBearerToken(c)).toBe("");
+  });
+});
+
+describe("timingSafeEqualHex", () => {
+  it("same hex ignoring case", () => {
+    expect(timingSafeEqualHex("a1b2", "A1B2")).toBe(true);
+    expect(timingSafeEqualHex("", "")).toBe(true);
+  });
+
+  it("different content or length", () => {
+    expect(timingSafeEqualHex("a1b2", "a1b3")).toBe(false);
+    expect(timingSafeEqualHex("a1", "a1b2")).toBe(false);
+  });
+});
+
+describe("timingSafeEqualString", () => {
+  it("same and different strings", () => {
+    expect(timingSafeEqualString("hello", "hello")).toBe(true);
+    expect(timingSafeEqualString("hello", "hellp")).toBe(false);
+    expect(timingSafeEqualString("a", "ab")).toBe(false);
   });
 });

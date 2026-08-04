@@ -14,10 +14,15 @@
 // ── HTTP 工具 ──
 export { ok, fail, failRateLimit, getOrigin, safeJsonBody, maskContact, normalizeCode, csvEscape, toCsv } from "./http.js";
 
+// ── 无业务小工具 ──
+export { clampInteger, isValidEmail } from "./utils.js";
+
 // ── 安全工具 ──
 export {
   sha256,
   constantTimeEqual,
+  timingSafeEqualHex,
+  timingSafeEqualString,
   getIpHash,
   getClientIp,
   getBearerToken,
@@ -61,6 +66,50 @@ export { logger, type LogLevel, type LogEntry } from "./logger.js";
 
 // ── 加解密 ──
 export { encrypt, decrypt, isEncryptionAvailable, generateUUID } from "./crypto.js";
+
+// ── 媒体图片 ──
+export {
+  MEDIA_IMAGE_CACHE_CONTROL,
+  detectMediaImage,
+  validateMediaImage,
+  createMediaImageKey,
+  isManagedMediaImageKey,
+  getManagedMediaImageContentType,
+  type SupportedMediaImage,
+  type ValidateMediaImageOptions,
+} from "./media-image.js";
+
+// ── API body limit ──
+export {
+  createApiBodyLimitResolver,
+  mediaUploadRequestLimitBytes,
+  isContentLengthOverLimit,
+  readRequestBodyWithinLimit,
+  rebuildRequestWithBody,
+  type ApiBodyLimitOptions,
+  type ApiBodyLimitResolver,
+  type ReadBodyWithinLimitResult,
+  type ReadBodyWithinLimitOk,
+  type ReadBodyWithinLimitOversize,
+} from "./api-body-limit.js";
+
+// ── 敏感配置加密封装 ──
+export {
+  SECRET_CONFIG_PREFIX_V1,
+  SECRET_CONFIG_PREFIX_V2_CORE_JSON,
+  isValidSecretEncryptionKey,
+  encryptSecretConfigValue,
+  decryptSecretConfigValue,
+  decryptSecretConfigResult,
+  decryptSecretConfigValueObserved,
+  // Legacy encrypt helpers: test/migration only — do not use for new writes
+  encryptSecretConfigValueLegacyRaw,
+  encryptSecretConfigValueLegacyV1CoreJson,
+  type SecretDecryptResult,
+  type SecretDecryptOk,
+  type SecretDecryptFail,
+  type SecretDecryptObserveEvent,
+} from "./secret-config.js";
 
 // ── 数据库 ──
 export { initDatabase, initDatabaseWithHealthCheck, getOrCreateClient, createDrizzle, type DrizzleInstance } from "./db/connection.js";
