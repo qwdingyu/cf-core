@@ -1,6 +1,6 @@
 {
   "name": "@usethink/cf-core",
-  "version": "0.4.12",
+  "version": "0.4.13",
   "description": "Cloudflare Workers 共享内核 — Hono + Turso + Drizzle 标准化基础设施",
   "type": "module",
   "main": "dist/src/index.js",
@@ -249,8 +249,13 @@
     "hono": "^4.12.22",
     "zod": "^3.23.0"
   },
-  "optionalDependencies": {
+  "peerDependencies": {
     "nodemailer": "^6.9.0"
+  },
+  "peerDependenciesMeta": {
+    "nodemailer": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260524.1",
