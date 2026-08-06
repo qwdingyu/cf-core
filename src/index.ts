@@ -17,6 +17,9 @@ export { ok, fail, failRateLimit, getOrigin, safeJsonBody, maskContact, normaliz
 // ── 无业务小工具 ──
 export { clampInteger, isValidEmail } from "./utils.js";
 
+// ── 双平台适配 ──
+export { getEnv, waitUntil, getTruncatedBody } from "./platform.js";
+
 // ── 安全工具 ──
 export {
   sha256,

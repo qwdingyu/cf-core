@@ -34,7 +34,7 @@ export function fail(
   details?: unknown,
 ) {
   return c.json(
-    { ok: false, error: message, ...(details ? { details } : {}) } as Record<string, unknown>,
+    { ok: false, error: message, message, ...(details ? { details } : {}) } as Record<string, unknown>,
     status as ContentfulStatusCode,
   );
 }
