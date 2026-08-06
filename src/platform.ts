@@ -11,16 +11,25 @@ import type { Context } from "hono";
  *
  * ── 信任模型 ──
  * ① Workers 环境：CF-Connecting-IP 由 Cloudflare 边缘注入，客户端**不可伪造** → 始终信任。
- * ② Node/VPS 环境：无 CF-Connecting-IP。仅当 trustProxyHeaders=true 时才信任 X-Forwarded-For/X-Real-IP。
- *   这是 fail-safe 默认：未显式配置 trustProxyHeaders 时返回 "127.0.0.1"，
- *   避免攻击者伪造 X-Forwarded-For 绕过 IP 限流（与 cf-auth 同一次安全修复）。
+ * ② Node/VPS 环境：CF-Connecting-IP 可由客户端伪造！
+ *   - 默认**不信任**该头（是 Workers 专属头，Node 中不可信）
+ *   - 仅 trustProxyHeaders=true 时才信任 X-Forwarded-For/X-Real-IP
+ *   - 这是 fail-safe 默认：避免攻击者伪造 X-Forwarded-For 绕过 IP 限流
+ *
+ * ── 环境自动检测 ──
+ * Node 环境判断：`typeof process !== "undefined" && process.versions?.node`。
+ * Workers 环境无 process 对象，该检测返回 false。
  */
 export function getClientIp(
   c: Context<{ Bindings?: Record<string, string | undefined> }>,
   trustProxyHeaders = false,
 ): string {
+  // 环境检测：typeof process 在 Workers 中不存在（无 Node 类型定义）
+  const isNode = typeof (globalThis as any).process !== "undefined" && Boolean((globalThis as any).process?.versions?.node);
+
+  // CF-Connecting-IP：仅 Workers 环境可信
   const cf = c.req.header("CF-Connecting-IP");
-  if (cf) return cf.trim(); // Workers：平台注入，无条件信任
+  if (cf && !isNode) return cf.trim(); // Workers：平台注入，无条件信任
 
   if (trustProxyHeaders) {
     const xff = c.req.header("X-Forwarded-For");
@@ -29,7 +38,7 @@ export function getClientIp(
     if (xri) return xri.trim();
   }
 
-  // 无可信来源 → "127.0.0.1"（fail-safe，不再尝试不可信的头）
+  // 无可信来源 → "127.0.0.1"（fail-safe）
   return "127.0.0.1";
 }
 
