@@ -80,3 +80,54 @@ describe("timingSafeEqualString", () => {
     expect(timingSafeEqualString("a", "ab")).toBe(false);
   });
 });
+
+describe("verifyTurnstile（P1-1 增强）", () => {
+  const mockCtx = (env: Record<string, unknown> = {}) => ({
+    env: { TURNSTILE_SECRET_KEY: "secret", ...env },
+    req: { header: () => undefined },
+  }) as any;
+
+  it("未启用时直接放行", async () => {
+    const { verifyTurnstile } = await import("../src/security.js");
+    const r = await verifyTurnstile(mockCtx(), undefined, { enabled: false });
+    expect(r).toEqual({ ok: true });
+  });
+
+  it("strict + 无 secret 返回 503", async () => {
+    const { verifyTurnstile } = await import("../src/security.js");
+    const r = await verifyTurnstile(mockCtx({ TURNSTILE_SECRET_KEY: undefined }), undefined, { strict: true });
+    expect(r).toMatchObject({ ok: false, status: 503 });
+  });
+
+  it("strict + 无 token + bypass 放过", async () => {
+    const { verifyTurnstile } = await import("../src/security.js");
+    const r = await verifyTurnstile(mockCtx(), undefined, {
+      strict: true, allowBypass: () => true,
+    });
+    expect(r).toMatchObject({ ok: true, smokeSkipped: true });
+  });
+
+  it("strict + 无 token 时 403", async () => {
+    const { verifyTurnstile } = await import("../src/security.js");
+    const r = await verifyTurnstile(mockCtx(), undefined, { strict: true });
+    expect(r).toMatchObject({ ok: false, status: 403 });
+  });
+
+  it("验证失败返回 fail", async () => {
+    const orig = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({ success: false }), { status: 200 });
+    const { verifyTurnstile } = await import("../src/security.js");
+    const r = await verifyTurnstile(mockCtx(), "t", { strict: true });
+    expect(r).toMatchObject({ ok: false, message: "人机验证失败" });
+    globalThis.fetch = orig;
+  });
+
+  it("验证成功返回 ok", async () => {
+    const orig = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({ success: true }), { status: 200 });
+    const { verifyTurnstile } = await import("../src/security.js");
+    const r = await verifyTurnstile(mockCtx(), "t", { strict: true });
+    expect(r).toMatchObject({ ok: true });
+    globalThis.fetch = orig;
+  });
+});
