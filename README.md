@@ -67,7 +67,22 @@ import { ok, fail, sha256, initDatabase, bootstrap } from "@usethink/cf-core";
 - **会进 core**：纯函数、版本化加密封装、媒体魔数校验、body 上限工厂与流式闸门。
 - **暂不进 / 禁止整包替换**：业务域（订单/抽奖/租户 RBAC）、限流表合并、HTTP fail 的 `error` vs `message` 全站契约迁移。
 - **JWT**：当前 `signJwt(userId, email, …)` 固定 payload，**不能**直接替换需要 `tenantId` 等自定义 claims 的产品会话；generic claims API 属于后续 Phase B′。
-- **Admin UI**：Vue 管理端共性在独立包 `@usethink/cf-admin`，**不**并入本库。
+- **Admin UI**：Vue 管理端共性在独立包 **`@usethink/cf-admin-fe`**（不是 `@usethink/cf-admin`），**不**并入本库。
+
+### 与 `@usethink/cf-admin-fe` 的边界（正交分工，禁止越界）
+
+cf-core 与 cf-admin-fe 是**互补而非重叠**的两个包（边界权威侧为本表；cf-admin-fe README 同名单向引用本表）：
+
+| 域 | 归属包 | 说明 |
+|---|---|---|
+| Worker/API 基础设施（后端优先 + 前后端可用的纯 TS） | **cf-core（本包）** | http、crypto、rate-limit、JWT、features/email、features/payment |
+| 前后端皆可用的纯 TS 原语 | **cf-core** | interpolate/escapeHtml、currency 转换、generateUUID |
+| storefront 端共享 composable | **cf-core** | features/telegram-miniapp（前台，非管理端；允许纯 TS composable，**禁止 .vue 组件**） |
+| 管理端前端套件（Vue 组件/composables/utils/i18n/styles） | **@usethink/cf-admin-fe** | AdminShell、AdminModal、createAdminRequest、useTableSelection |
+
+**硬性纪律（`npm run verify:boundaries` 强制执行）**：
+- **`src/` 与 `features/` 禁止 .vue 组件文件**：本包是基础设施内核（可含前端可用的纯 TS），不承载 UI 组件；管理端 UI 归 cf-admin-fe，storefront UI 归消费方。
+- **禁止依赖或 import `@usethink/cf-admin-fe`**：内核不被管理端套件反向污染；两包双向零依赖、正交（管理端套件同样禁止依赖本包）。
 
 ### 敏感配置与 body 闸门示例
 

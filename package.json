@@ -231,7 +231,8 @@
     "init:system-config": "node scripts/init-system-config.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "npm run type-check && npm test",
+    "verify:boundaries": "node scripts/verify-boundaries.mjs",
+    "prepublishOnly": "npm run type-check && npm test && npm run verify:boundaries",
     "prepack": "npm run build"
   },
   "dependencies": {
