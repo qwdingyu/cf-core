@@ -196,6 +196,13 @@
         "default": "./dist/features/email/index.js"
       }
     },
+    "./features/email/schema": {
+      "types": "./dist/features/email/schema.d.ts",
+      "import": {
+        "development": "./features/email/schema.ts",
+        "default": "./dist/features/email/schema.js"
+      }
+    },
     "./features/webhook": {
       "types": "./dist/features/webhook/index.d.ts",
       "import": {

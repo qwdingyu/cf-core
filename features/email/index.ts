@@ -250,11 +250,12 @@ export class EmailService {
     apiKey: string,
     opts: { from: string; to: string; subject: string; html: string },
   ): Promise<SendResult> {
-    return this.fetchWithRetry(async () => {
+    return this.fetchWithRetry(async (signal) => {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify(opts),
+        signal,
       });
       const data = (await res.json()) as { id?: string; message?: string };
       if (res.ok) return { ok: true, messageId: data.id };
@@ -291,21 +292,17 @@ export class EmailService {
   }
 
   private async fetchWithRetry(
-    fn: () => Promise<SendResult>,
+    fn: (signal: AbortSignal) => Promise<SendResult>,
   ): Promise<SendResult> {
     let lastResult: SendResult = { ok: false, error: "" };
     for (let i = 0; i <= this.maxRetries; i++) {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
       try {
-        const result = await fn();
-        clearTimeout(timer);
+        const result = await fn(AbortSignal.timeout(this.timeoutMs));
         if (result.ok) return result;
         // 4xx 不重试
         if (result.error && /HTTP 4\d\d/.test(result.error)) return result;
         lastResult = result;
       } catch (err) {
-        clearTimeout(timer);
         lastResult = { ok: false, error: err instanceof Error ? err.message : String(err) };
       }
       if (i < this.maxRetries) {
