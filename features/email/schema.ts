@@ -7,6 +7,9 @@
  *   // 加入项目的 migration 列表
  *
  * 状态机：pending → sent | failed
+ *
+ * orderId：可选的业务关联字段（订单/活动等触发的邮件，供客服按业务单号查投递记录）。
+ * 跨项目通用（shop 订单、lottery 中奖、auth 事件均可关联），非特定业务列。
  */
 import { integer, sqliteTable, text, index } from "drizzle-orm/sqlite-core";
 
@@ -14,6 +17,7 @@ export const emailLog = sqliteTable(
   "email_log",
   {
     id: text("id").primaryKey(),
+    orderId: text("order_id"),
     toAddr: text("to_addr").notNull(),
     subject: text("subject"),
     status: text("status").notNull(), // pending | sent | failed
@@ -28,6 +32,7 @@ export const emailLog = sqliteTable(
 export const EMAIL_LOG_CREATE_SQL = `
 CREATE TABLE IF NOT EXISTS "email_log" (
   id TEXT PRIMARY KEY NOT NULL,
+  order_id TEXT,
   to_addr TEXT NOT NULL,
   subject TEXT,
   status TEXT NOT NULL,
