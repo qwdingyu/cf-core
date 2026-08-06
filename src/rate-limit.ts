@@ -50,6 +50,20 @@ export class MemoryRateLimiter implements RateLimiter {
     record.count++;
     return { ok: true, remaining: limit - record.count };
   }
+
+  /**
+   * 滑动窗口计数估计（docs/091 P1-3）。
+   * 粗略估计过去 windowMs 内的请求数，用于限流前的预判断。
+   */
+  estimateSlidingWindowCount(key: string, windowMs: number): number {
+    const now = Date.now();
+    const record = this.store.get(key);
+    if (!record || now > record.resetAt) return 0;
+    const elapsed = windowMs - (record.resetAt - now);
+    const ratio = Math.max(0, Math.min(1, elapsed / windowMs));
+    // 前一个窗口剩余部分取 0（固定窗口估计的上界）
+    return Math.ceil(record.count * (1 - ratio) + record.count);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

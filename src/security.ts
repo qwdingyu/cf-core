@@ -256,3 +256,46 @@ export function buildSecurityHeaders(options: SecurityHeadersOptions = {}): Head
     "Cross-Origin-Opener-Policy": "same-origin",
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 加密工具（AES-256-GCM，Web Crypto，docs/091 P1-6）
+// 兼容 cf-auth email_config.encrypted_secret 格式：base64(iv + ciphertext + authTag)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function importAesKey(hexKey: string): Promise<CryptoKey> {
+  const keyBytes = new Uint8Array(hexKey.length / 2);
+  for (let i = 0; i < keyBytes.length; i++) {
+    keyBytes[i] = parseInt(hexKey.substr(i * 2, 2), 16);
+  }
+  return crypto.subtle.importKey("raw", keyBytes, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+}
+
+/**
+ * 加密敏感数据（AES-256-GCM）。
+ * @returns base64(iv + ciphertext + authTag)，与 cf-auth email_config 格式兼容
+ */
+export async function encryptSecret(keyHex: string, plaintext: string): Promise<string> {
+  const key = await importAesKey(keyHex);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder().encode(plaintext);
+  const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc);
+  // ciphertext = encrypted + authTag (last 16 bytes)
+  const buf = new Uint8Array(ciphertext);
+  const result = new Uint8Array(12 + buf.length);
+  result.set(iv, 0);
+  result.set(buf, 12);
+  return btoa(String.fromCharCode(...result)).replace(/\+/g, "-").replace(/\//g, "_");
+}
+
+/**
+ * 解密 AES-256-GCM 数据。
+ * @param encoded base64(iv + ciphertext + authTag)
+ */
+export async function decryptSecret(keyHex: string, encoded: string): Promise<string> {
+  const key = await importAesKey(keyHex);
+  const raw = Uint8Array.from(atob(encoded.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+  const iv = raw.slice(0, 12);
+  const ciphertext = raw.slice(12);
+  const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+  return new TextDecoder().decode(decrypted);
+}
