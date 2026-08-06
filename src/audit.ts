@@ -23,6 +23,10 @@ export interface AuditInput {
   targetId?: string;
   metadata?: unknown;
   ipHash?: string;
+  /** 可选租户隔离（cf-lottery 等） */
+  tenantId?: string;
+  /** 操作人用户 ID（多用户共享 IP 场景） */
+  actorUserId?: string;
 }
 
 /** 默认 IP 哈希：SHA-256 截 12 字符，不存原始 IP */
@@ -59,6 +63,8 @@ export async function writeAdminAudit(
       targetId: input.targetId || "",
       metadataJson: JSON.stringify(input.metadata || {}),
       ipHash,
+      tenantId: input.tenantId || null,
+      actorUserId: input.actorUserId || null,
       createdAt: new Date().toISOString(),
     });
 

@@ -39,6 +39,10 @@ export const adminAuditLogs = sqliteTable("admin_audit_logs", {
   metadataJson: text("metadata_json").default("{}").notNull(),
   ipHash: text("ip_hash").default("").notNull(),
   createdAt: text("created_at").default("").notNull(),
+  /** docs/091 P1-13：可选租户隔离维度（cf-lottery 等租户项目填入） */
+  tenantId: text("tenant_id"),
+  /** 操作人用户 ID（与 ipHash 互补，用于多用户共享 IP 场景） */
+  actorUserId: text("actor_user_id"),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
