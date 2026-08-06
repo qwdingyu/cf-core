@@ -8,21 +8,29 @@ import type { Context } from "hono";
 
 /**
  * getClientIp — 从请求中提取客户端真实 IP。
- * 仅当 trustProxyHeaders=true 时信任 X-Forwarded-For。
+ *
+ * ── 信任模型 ──
+ * ① Workers 环境：CF-Connecting-IP 由 Cloudflare 边缘注入，客户端**不可伪造** → 始终信任。
+ * ② Node/VPS 环境：无 CF-Connecting-IP。仅当 trustProxyHeaders=true 时才信任 X-Forwarded-For/X-Real-IP。
+ *   这是 fail-safe 默认：未显式配置 trustProxyHeaders 时返回 "127.0.0.1"，
+ *   避免攻击者伪造 X-Forwarded-For 绕过 IP 限流（与 cf-auth 同一次安全修复）。
  */
 export function getClientIp(
   c: Context<{ Bindings?: Record<string, string | undefined> }>,
   trustProxyHeaders = false,
 ): string {
+  const cf = c.req.header("CF-Connecting-IP");
+  if (cf) return cf.trim(); // Workers：平台注入，无条件信任
+
   if (trustProxyHeaders) {
     const xff = c.req.header("X-Forwarded-For");
     if (xff) return xff.split(",")[0]!.trim();
+    const xri = c.req.header("X-Real-IP");
+    if (xri) return xri.trim();
   }
-  // CF Workers: CF-Connecting-IP
-  const cf = c.req.header("CF-Connecting-IP");
-  if (cf) return cf.trim();
-  // Fallback
-  return c.req.header("X-Real-IP") || c.env?.remoteAddr || "127.0.0.1";
+
+  // 无可信来源 → "127.0.0.1"（fail-safe，不再尝试不可信的头）
+  return "127.0.0.1";
 }
 
 /**
