@@ -60,6 +60,7 @@ export { writeAdminAudit, type AuditInput } from "./audit.js";
 
 // ── 系统配置 ──
 export { SystemConfig, type SystemConfigOptions } from "./config.js";
+export { createSystemConfigRegistry, type SystemConfigRegistry, type SystemConfigDefinition, type SystemConfigValueType, type SystemConfigIntegerUnit, type NormalizeResult } from "./config.js";
 
 // ── 错误处理 ──
 export { classifyError, retryWithBackoff, ErrorType, type RetryOptions } from "./error.js";
