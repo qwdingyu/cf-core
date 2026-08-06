@@ -155,14 +155,30 @@ export function getBearerToken(c: Context): string {
 export async function verifyTurnstile(
   c: Context<any>,
   token?: string,
-  opts?: { strict?: boolean },
+  opts?: {
+    strict?: boolean;
+    /** DB 配置开关（turnstile_enabled）；false 时直接放行，不依赖 env 存在性 */
+    enabled?: boolean;
+    /** 注入 DB 配置的 secret（优先于 env TURNSTILE_SECRET_KEY） */
+    secret?: string;
+    /** smoke 绕过回调：返回 true 时跳过验证（cf-shop 管理端冒烟用） */
+    allowBypass?: (c: Context<any>) => boolean;
+  },
 ): Promise<TurnstileResult> {
   const strict = opts?.strict === true;
-  const secret: string | undefined = c.env.TURNSTILE_SECRET_KEY;
-  // strict 模式且无密钥 → fail-closed（拒绝请求，避免绕过人机验证）
-  if (strict && !secret) return { ok: false, message: "人机验证未配置" };
+  const enabled = opts?.enabled !== false; // 默认 true（env secret 存在即视为启用）
+  const secret: string | undefined = opts?.secret || c.env.TURNSTILE_SECRET_KEY;
+
+  // DB 配置关闭时直接放行
+  if (!enabled) return { ok: true };
+
+  if (strict && !secret) return { ok: false, status: 503, message: "人机验证未配置，但已启用 Turnstile" };
   if (!secret) return { ok: true };
-  if (!token) return strict ? { ok: false, message: "缺少验证令牌" } : { ok: true };
+
+  if (!token) {
+    if (opts?.allowBypass?.(c)) return { ok: true, smokeSkipped: true };
+    return strict ? { ok: false, status: 403, message: "缺少验证令牌" } : { ok: true };
+  }
 
   const form = new FormData();
   form.append("secret", secret);
@@ -185,7 +201,7 @@ export async function verifyTurnstile(
     return { ok: true };
   } catch (err) {
     console.error("[turnstile] fetch error:", err);
-    return strict ? { ok: false, message: "人机验证服务不可用" } : { ok: true };
+    return strict ? { ok: false, status: 503, message: "人机验证服务不可用" } : { ok: true };
   }
 }
 

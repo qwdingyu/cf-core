@@ -179,3 +179,36 @@ export class DbRateLimiter implements RateLimiter {
     }
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 日志式 DB 限流（原子 INSERT，docs/091 P1-4）
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export class DbLogRateLimiter implements RateLimiter {
+  constructor(
+    private db: {
+      select: (...args: unknown[]) => { from: (table: unknown) => { where: (...args: unknown[]) => { limit: (n: number) => Promise<Array<{ count: number }>> } } };
+      insert: (table: unknown) => { values: (data: Record<string, unknown>) => Promise<unknown> };
+    },
+    /** 表定义（如 rate_limit_log） */
+    private table: unknown,
+  ) {}
+
+  async check(key: string, limit: number, windowMs: number): Promise<RateLimitResult> {
+    const cutoff = new Date(Date.now() - windowMs).toISOString();
+    const rows = await (this.db.select({ count: sql`count(*)` } as any) as any)
+      .from(this.table)
+      .where(sql`key = ${key} AND created_at > ${cutoff}`)
+      .limit(1);
+    const current = Number(rows?.[0]?.count || 0);
+    if (current >= limit) return { ok: false, message: "请求过于频繁", status: 429, resetMs: windowMs, remaining: 0 };
+
+    await (this.db.insert(this.table) as any).values({
+      id: crypto.randomUUID(),
+      key,
+      action: "check",
+      created_at: cutoff,
+    });
+    return { ok: true, remaining: Math.max(0, limit - current - 1) };
+  }
+}

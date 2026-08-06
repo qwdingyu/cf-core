@@ -38,7 +38,7 @@ export {
 export { createCache, cache } from "./cache.js";
 
 // ── 限流 ──
-export { MemoryRateLimiter, KvRateLimiter, DbRateLimiter, type RateLimiter } from "./rate-limit.js";
+export { MemoryRateLimiter, KvRateLimiter, DbRateLimiter, DbLogRateLimiter, type RateLimiter } from "./rate-limit.js";
 
 // ── 幂等性 ──
 export {

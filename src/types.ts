@@ -55,6 +55,10 @@ export interface FailResponse {
 export interface TurnstileResult {
   ok: boolean;
   message?: string;
+  /** HTTP 状态码（cf-shop 严格模式需要 503/403 区分；core 宽松模式无此字段） */
+  status?: number;
+  /** 是否因 smoke 绕过跳过验证（cf-shop 管理端冒烟用） */
+  smokeSkipped?: boolean;
 }
 
 /**
