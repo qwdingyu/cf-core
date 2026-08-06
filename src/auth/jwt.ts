@@ -149,3 +149,40 @@ export function extractJwt(c: { req: { header: (name: string) => string | undefi
   }
   return null;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 免费层密码哈希（HMAC SHA-256 + pepper，docs/091 P1-8）
+// cf-lottery 针对 10ms CPU 硬约束的自研方案，与 PBKDF2 有意分歧。
+// Worker 环境可用，无需额外依赖。
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * HMAC SHA-256 密码哈希（带 pepper）。
+ * 比 PBKDF2 快 ~50x（<1ms vs ~50ms），适合免费层 CPU 受限场景。
+ */
+export async function hashPasswordWithPepper(
+  password: string,
+  pepper: string,
+): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(pepper),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(password));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/**
+ * 安全比较两个密码哈希（constant-time）。
+ */
+export function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
