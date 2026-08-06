@@ -5,6 +5,8 @@
  * Workers 原生支持，性能优异。
  *
  * 来源：xtools src/lib/auth.ts
+ * 泛型 claims 版（signJwtWithClaims/verifyJwtClaims）：docs/091 P0-4，
+ * 收敛 cf-lottery 等因固定 payload 受限而自研的自由 claims 实现。
  */
 
 export interface JwtPayload {
@@ -13,6 +15,12 @@ export interface JwtPayload {
   iat: number;
   exp: number;
 }
+
+/** 泛型 claims：任意字符串/数字/布尔字段（如 tenantId/role），签发时自动注入 iat/exp */
+export type JwtClaims = Record<string, string | number | boolean>;
+
+/** 泛型验证结果：调用方 claims + 系统注入的 iat/exp */
+export type JwtClaimsVerified = JwtClaims & { iat: number; exp: number };
 
 const DEFAULT_EXPIRY = 24 * 60 * 60; // 24 小时
 
@@ -44,7 +52,7 @@ async function importHmacKey(secret: string): Promise<CryptoKey> {
 }
 
 /**
- * 签发 JWT
+ * 签发 JWT（固定 sub/email payload，兼容旧调用方）
  */
 export async function signJwt(
   userId: string,
@@ -52,11 +60,25 @@ export async function signJwt(
   secret: string,
   expirySeconds = DEFAULT_EXPIRY,
 ): Promise<string> {
+  return signJwtWithClaims({ sub: userId, email }, secret, expirySeconds);
+}
+
+/**
+ * 签发 JWT（泛型 claims：任意字段，如 tenantId/role；自动注入 iat/exp）
+ *
+ * docs/091 P0-4：替代 cf-lottery 本地自由 claims 版（Record<string, any>），
+ * 提供类型安全的泛型 payload；sub/email 不再是强制的固定结构。
+ */
+export async function signJwtWithClaims(
+  payload: JwtClaims,
+  secret: string,
+  ttlSeconds: number,
+): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  const payload: JwtPayload = { sub: userId, email, iat: now, exp: now + expirySeconds };
+  const fullPayload = { ...payload, iat: now, exp: now + ttlSeconds };
 
   const header = base64UrlEncode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const body = base64UrlEncode(JSON.stringify(payload));
+  const body = base64UrlEncode(JSON.stringify(fullPayload));
   const signingInput = `${header}.${body}`;
 
   const key = await importHmacKey(secret);
@@ -66,9 +88,24 @@ export async function signJwt(
 }
 
 /**
- * 验证并解析 JWT — 验证失败返回 null
+ * 验证并解析 JWT（固定 JwtPayload 形状）— 验证失败返回 null
  */
 export async function verifyJwt(token: string, secret: string): Promise<JwtPayload | null> {
+  const claims = await verifyJwtClaims(token, secret);
+  if (!claims) return null;
+  if (typeof claims.sub !== "string" || typeof claims.email !== "string") return null;
+  return { sub: claims.sub, email: claims.email, iat: claims.iat, exp: claims.exp };
+}
+
+/**
+ * 验证并解析 JWT（泛型 claims）— 验证失败返回 null
+ *
+ * 调用方读取自己的 claims（如 claims.tenantId），系统字段 iat/exp 已校验。
+ */
+export async function verifyJwtClaims(
+  token: string,
+  secret: string,
+): Promise<JwtClaimsVerified | null> {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
@@ -85,8 +122,8 @@ export async function verifyJwt(token: string, secret: string): Promise<JwtPaylo
     );
     if (!valid) return null;
 
-    const payload = JSON.parse(new TextDecoder().decode(base64UrlDecode(body))) as JwtPayload;
-    if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+    const payload = JSON.parse(new TextDecoder().decode(base64UrlDecode(body))) as JwtClaimsVerified;
+    if (typeof payload.exp !== "number" || payload.exp < Math.floor(Date.now() / 1000)) return null;
 
     return payload;
   } catch {

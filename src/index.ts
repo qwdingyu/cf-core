@@ -124,7 +124,7 @@ export {
 } from "./db/schema.js";
 
 // ── 认证 ──
-export { signJwt, verifyJwt, extractJwt, type JwtPayload } from "./auth/jwt.js";
+export { signJwt, verifyJwt, extractJwt, signJwtWithClaims, verifyJwtClaims, type JwtPayload, type JwtClaims, type JwtClaimsVerified } from "./auth/jwt.js";
 export { hashPassword, verifyPassword } from "./auth/password.js";
 
 // ── 中间件 ──
