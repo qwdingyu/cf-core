@@ -203,6 +203,13 @@
         "default": "./dist/features/email/schema.js"
       }
     },
+    "./features/email/cloudflare": {
+      "types": "./dist/features/email/cloudflare.d.ts",
+      "import": {
+        "development": "./features/email/cloudflare.ts",
+        "default": "./dist/features/email/cloudflare.js"
+      }
+    },
     "./platform": {
       "types": "./dist/src/platform.d.ts",
       "import": {
