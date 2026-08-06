@@ -241,6 +241,9 @@
     "hono": "^4.12.22",
     "zod": "^3.23.0"
   },
+  "optionalDependencies": {
+    "nodemailer": "^6.9.0"
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260524.1",
     "@usethink/publish-toolkit": "^0.1.15",

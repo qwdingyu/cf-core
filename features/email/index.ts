@@ -24,10 +24,11 @@ export function escapeHtml(s: string): string {
 
 export function interpolate(template: string, data: Record<string, string>): string {
   return template
-    .replace(/\{\{(\w+)\}\}/g, (_, key) => escapeHtml(String(data[key] ?? "")))
+    // 先 {{#if}} 再 {{var}}：避免用户数据中的 {{/if}} 被误匹配为块结束符
     .replace(/\{\{#if (\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, key, content) =>
       data[key] ? content : "",
-    );
+    )
+    .replace(/\{\{(\w+)\}\}/g, (_, key) => escapeHtml(String(data[key] ?? "")));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -91,6 +92,8 @@ export interface SendEmailOptions {
 export interface SendResult {
   ok: boolean;
   messageId?: string;
+  /** HTTP 状态码（仅 Resend 通道）；用于 4xx 不重试的结构化判断 */
+  status?: number;
   error?: string;
 }
 
@@ -171,19 +174,30 @@ export class EmailService {
 
   /**
    * 日志包装发送（含 pending → sent/failed 三态）
+   * 日志写入（onLog）失败不阻断发送（fail-open）：email_log 表异常时邮件仍可送达，
+   * 业务不得因审计日志失败而丢信。
    */
   async sendWithLog(opts: SendEmailOptions): Promise<SendResult> {
     const logId = crypto.randomUUID();
     const logEntry: EmailLogEntry = { id: logId, to: opts.to, subject: opts.subject, status: "pending", provider: null };
-    await this.logger?.(logEntry);
+    await this.safeLog(logEntry);
 
     const result = await this.send(opts);
 
     logEntry.status = result.ok ? "sent" : "failed";
     logEntry.error = result.error;
-    await this.logger?.(logEntry);
+    await this.safeLog(logEntry);
 
     return result;
+  }
+
+  private async safeLog(entry: EmailLogEntry): Promise<void> {
+    try {
+      await this.logger?.(entry);
+    } catch (err) {
+      // fail-open：日志钩子抛错（如 DB 写入失败）不得阻断邮件发送流程
+      console.warn("[email] onLog 写入失败（不影响发送）:", err instanceof Error ? err.message : String(err));
+    }
   }
 
   /**
@@ -259,7 +273,9 @@ export class EmailService {
       });
       const data = (await res.json()) as { id?: string; message?: string };
       if (res.ok) return { ok: true, messageId: data.id };
-      return { ok: false, error: data.message || `HTTP ${res.status}` };
+      // 结构化返回 HTTP status：fetchWithRetry 据此判断 4xx 不重试，
+      // 不再依赖错误字符串里是否带 "HTTP 4xx"（Resend 的 data.message 常不含状态码）
+      return { ok: false, status: res.status, error: data.message || `HTTP ${res.status}` };
     });
   }
 
@@ -273,10 +289,17 @@ export class EmailService {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const env: any = typeof globalThis !== "undefined" ? globalThis : {};
       if (!env.process?.versions?.node) return { ok: false, error: "SMTP 仅 Node 环境可用" };
-      // @ts-expect-error - nodemailer 运行时可用，非项目包依赖
-      const { createTransport } = await import("nodemailer");
+      // nodemailer 声明在 optionalDependencies：仅自建 Node 部署模式需要，
+      // CF Workers 消费方不会引入（esbuild 保留为 external，不影响 bundle）
+      let transportModule: { createTransport: (cfg: Record<string, unknown>) => { sendMail: (o: unknown) => Promise<unknown>; close: () => Promise<void> } };
+      try {
+        // @ts-expect-error - nodemailer 运行时可选解析
+        transportModule = await import("nodemailer");
+      } catch {
+        return { ok: false, error: "nodemailer 未安装：SMTP 通道需要消费方安装 nodemailer（仅 Node 部署模式）" };
+      }
       const tlsMode = channel.tlsMode || "starttls";
-      const t = createTransport({
+      const t = transportModule.createTransport({
         host: channel.host,
         port: channel.port ?? (tlsMode === "ssl" ? 465 : 587),
         secure: tlsMode === "ssl",
@@ -299,8 +322,8 @@ export class EmailService {
       try {
         const result = await fn(AbortSignal.timeout(this.timeoutMs));
         if (result.ok) return result;
-        // 4xx 不重试
-        if (result.error && /HTTP 4\d\d/.test(result.error)) return result;
+        // 4xx（客户端错误）重试无意义，结构化 status 判断后直接返回
+        if (result.status !== undefined && result.status >= 400 && result.status < 500) return result;
         lastResult = result;
       } catch (err) {
         lastResult = { ok: false, error: err instanceof Error ? err.message : String(err) };
