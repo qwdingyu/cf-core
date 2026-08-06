@@ -25,3 +25,20 @@ export function clampInteger(
 export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
 }
+
+/**
+ * canonicalEmail — 邮箱归一化（docs/091 P1-12）。
+ * Gmail: 去点号、去加号别名、统一 @gmail.com / @googlemail.com。
+ * 其他：仅 trim + toLowerCase。cf-shop 三处同一口径，统一到此函数。
+ */
+export function canonicalEmail(email: string): string {
+  let e = email.trim().toLowerCase();
+  const at = e.lastIndexOf("@");
+  if (at <= 0) return e;
+  const local = e.slice(0, at);
+  const domain = e.slice(at + 1);
+  if (domain === "gmail.com" || domain === "googlemail.com") {
+    return local.replace(/\./g, "").replace(/\+.*$/, "") + "@gmail.com";
+  }
+  return e;
+}

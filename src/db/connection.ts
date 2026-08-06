@@ -119,6 +119,45 @@ export async function initDatabaseWithHealthCheck<TSchema extends Record<string,
 }
 
 /**
+ * 带 SQLITE_BUSY 退避的数据库事务（docs/091 P1-5）。
+ * 最多重试 3 次，指数退避（500/1000/2000ms）。
+ */
+export async function withDbTransaction<T>(
+  db: DrizzleInstance,
+  fn: (tx: ReturnType<DrizzleInstance["transaction"]>) => Promise<T>,
+): Promise<T> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await db.transaction(async (tx) => fn(tx as any));
+    } catch (err: any) {
+      if (attempt >= 2 || !isSqliteBusy(err)) throw err;
+      await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
+    }
+  }
+  throw new Error("unreachable");
+}
+
+function isSqliteBusy(err: any): boolean {
+  const msg = err?.message || String(err);
+  return msg.includes("SQLITE_BUSY") || msg.includes("database is locked");
+}
+
+/**
+ * 幂等 SQL 迁移 runner（docs/091 P1-7）。
+ *
+ * 消费方传入 statements 数组，runner 逐条 execute。
+ * CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS 由 SQL 保证幂等。
+ */
+export async function runIdempotentMigrations(
+  client: Client,
+  statements: string[],
+): Promise<void> {
+  for (const sql of statements) {
+    await client.execute(sql);
+  }
+}
+
+/**
  * 重置 Isolate 级缓存（仅用于测试）
  */
 export function _resetCache(): void {

@@ -15,7 +15,7 @@
 export { ok, fail, failRateLimit, getOrigin, safeJsonBody, maskContact, normalizeCode, csvEscape, toCsv } from "./http.js";
 
 // ── 无业务小工具 ──
-export { clampInteger, isValidEmail } from "./utils.js";
+export { clampInteger, isValidEmail, canonicalEmail } from "./utils.js";
 
 // ── 双平台适配 ──
 export { getEnv, waitUntil, getTruncatedBody } from "./platform.js";
