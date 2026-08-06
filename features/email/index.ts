@@ -10,6 +10,26 @@
  *
  * 来源：cf-shop email-service.ts + cf-auth email.ts + email-config.ts
  * 消费方：cf-shop / cf-lottery / cf-auth / 未来 cf-* 项目
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 邮件通道的环境兼容性（2026-08-07 验证）
+ *
+ * | 环境 | 通道 | 可用性 | 原因 |
+ * |---|---|---|---|
+ * | Cloudflare Workers | Resend（HTTP API） | ✅ 推荐 | fetch 直接调用，零依赖 |
+ * | Cloudflare Workers | 第三方 HTTP API（Mailgun/SendGrid/SES v2 等） | ✅ 可用 | 同 Resend，纯 HTTP 协议 |
+ * | Cloudflare Workers | SMTP 端口 25（明文） | ❌ 禁止 | Workers TCP connect() 明确禁止端口 25 |
+ * | Cloudflare Workers | SMTP 端口 465/587（TLS） | ❌ 不可用 | cf-core 依赖 nodemailer（Node 模块），Worker 运行时不可用 |
+ * | Cloudflare Workers | Cloudflare Email Service（env.EMAIL.send） | ✅ 原生推荐 | Worker 原生 binding，零第三方依赖（2026 年已 GA） |
+ * | VPS / Node 服务器 | Resend（HTTP API） | ✅ 可用 | 同 Workers |
+ * | VPS / Node 服务器 | SMTP 端口 25/465/587 | ✅ 可用 | 需显式 npm install nodemailer（peer optional） |
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 设计决策：SMTP 在 Workers 上结构性不可用（端口 25 被禁 + nodemailer 不可用），
+ * 因此 cf-core 的 SMTP 通道仅限自建 Node 部署模式（server.ts + PM2 + 显式安装 nodemailer）。
+ * Workers 生产环境应使用 Resend 或 Cloudflare Email Service。
+ * cf-core EmailService 默认只走 Resend（apiKey 参数），不走 SMTP 通道。
+ * 如需切换，消费方自行实现 Cloudflare Email Service 的 binding 调用。
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════
