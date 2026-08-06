@@ -147,17 +147,22 @@ export function getBearerToken(c: Context): string {
  * - 未配置 TURNSTILE_SECRET_KEY 时直接放行（分阶段部署）
  * - 无 token 时静默通过（smoke 测试/管理端调用）
  * - 验证失败返回 { ok: false, message }
+ * - strict 模式：secret 已配置时验证失败＝拒绝（fail-closed，cf-shop 语义）
  *
- * 来源：cf-shop（FormData 版）+ vcode（urlencoded 版）合并为 FormData 版（更规范）
+ * 来源：cf-shop（FormData 版 + strict 模式）+ vcode（urlencoded 版）合并
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function verifyTurnstile(
   c: Context<any>,
   token?: string,
+  opts?: { strict?: boolean },
 ): Promise<TurnstileResult> {
-  const secret = c.env.TURNSTILE_SECRET_KEY;
+  const strict = opts?.strict === true;
+  const secret: string | undefined = c.env.TURNSTILE_SECRET_KEY;
+  // strict 模式且无密钥 → fail-closed（拒绝请求，避免绕过人机验证）
+  if (strict && !secret) return { ok: false, message: "人机验证未配置" };
   if (!secret) return { ok: true };
-  if (!token) return { ok: true };
+  if (!token) return strict ? { ok: false, message: "缺少验证令牌" } : { ok: true };
 
   const form = new FormData();
   form.append("secret", secret);
@@ -180,7 +185,7 @@ export async function verifyTurnstile(
     return { ok: true };
   } catch (err) {
     console.error("[turnstile] fetch error:", err);
-    return { ok: true };
+    return strict ? { ok: false, message: "人机验证服务不可用" } : { ok: true };
   }
 }
 
