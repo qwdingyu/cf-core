@@ -57,7 +57,7 @@ describe("EmailService — 单 Resend 路径", () => {
     const svc = new EmailService({});
     const r = await svc.send({ to: "a@b.com", subject: "s", html: "h" });
     expect(r.ok).toBe(false);
-    expect(r.error).toBe("未配置 Resend API Key 或 configProvider");
+    expect(r.error).toBe("所有邮件通道均不可用（未配置 remote / Cloudflare / configProvider / Resend）");
   });
 
   it("4xx + data.message（如 invalid api key）不重试（P2 回归）", async () => {
@@ -140,14 +140,15 @@ describe("EmailService — 多通道容错链", () => {
     const r = await svc.send({ to: "a@b.com", subject: "s", html: "h" });
 
     expect(r.ok).toBe(false);
-    expect(r.error).toBe("all down");
+    // 回退链：configProvider 全部失败 → 最终错误（docs/093 通道回退）
+    expect(r.error).toBe("所有邮件通道均不可用（未配置 remote / Cloudflare / configProvider / Resend）");
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("无启用通道时返回明确错误", async () => {
     const svc = new EmailService({ configProvider: { listEnabled: async () => [] } });
     const r = await svc.send({ to: "a@b.com", subject: "s", html: "h" });
-    expect(r).toEqual({ ok: false, error: "无启用的邮件通道" });
+    expect(r).toEqual({ ok: false, error: "所有邮件通道均不可用（未配置 remote / Cloudflare / configProvider / Resend）" });
   });
 });
 

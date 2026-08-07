@@ -166,34 +166,42 @@ export class EmailService {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * 发送邮件。优先级：remote（cf-auth 网关）→ Cloudflare Email binding → configProvider → 单 Resend。
-   * cf-auth 邮件网关（docs/093）是全项目邮件集中通道，消费方零配置，优先使用。
+   * 发送邮件。通道回退链：remote（cf-auth 网关）→ Cloudflare Email binding → configProvider → 单 Resend。
+   * 任一通道失败自动回退下一通道（消费方 remote 优先 + 本地兜底，docs/093）。
    */
   async send(opts: SendEmailOptions): Promise<SendResult> {
     const { to, subject, html } = opts;
     const from = opts.from || this.defaultFrom;
     if (!to || !to.includes("@")) return { ok: false, error: "无效收件人" };
 
-    // cf-auth 邮件网关（docs/093）：消费方通过 OAuth client 调用，集中发送
+    // 1. cf-auth 邮件网关（docs/093）：消费方通过 OAuth client 调用，集中发送
     if (this.remote) {
-      return sendViaRemote(this.remote, { from, to, subject, html });
+      const result = await sendViaRemote(this.remote, { from, to, subject, html });
+      if (result.ok) return result;
+      console.warn("[email] cf-auth 网关失败，回退下一通道:", result.error);
     }
 
-    // Cloudflare Email Service（Workers 原生 binding，零第三方依赖）
+    // 2. Cloudflare Email Service（Workers 原生 binding，零第三方依赖）
     if (this.emailBinding) {
-      return sendViaCloudflareEmail(this.emailBinding, { from, to, subject, html });
+      const result = await sendViaCloudflareEmail(this.emailBinding, { from, to, subject, html });
+      if (result.ok) return result;
+      console.warn("[email] Cloudflare Email 失败，回退下一通道:", result.error);
     }
 
-    // 多通道路径
+    // 3. 多通道路径（configProvider 内部已按 priority 轮询）
     if (this.configProvider) {
       const channels = await this.configProvider.listEnabled();
-      if (channels.length === 0) return { ok: false, error: "无启用的邮件通道" };
-      return this.sendViaChain(channels, { from, to, subject, html });
+      if (channels.length > 0) {
+        const result = await this.sendViaChain(channels, { from, to, subject, html });
+        if (result.ok) return result;
+      }
     }
 
-    // 单 Resend 路径（向后兼容）
-    if (!this.config?.apiKey) return { ok: false, error: "未配置 Resend API Key 或 configProvider" };
-    return this.sendViaResend(this.config.apiKey, { from, to, subject, html });
+    // 4. 单 Resend 路径（向后兼容）
+    if (this.config?.apiKey) {
+      return this.sendViaResend(this.config.apiKey, { from, to, subject, html });
+    }
+    return { ok: false, error: "所有邮件通道均不可用（未配置 remote / Cloudflare / configProvider / Resend）" };
   }
 
   /**
