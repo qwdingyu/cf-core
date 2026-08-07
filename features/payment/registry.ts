@@ -7,10 +7,10 @@
  *
  * @example
  * ```ts
- * import { createProviderRegistry, stripeFactory, alipayFactory } from "@usethink/cf-core/features/payment";
+ * import { createProviderRegistry, stripeFactory, alipayFactory, easyPayFactory } from "@usethink/cf-core/features/payment";
  *
  * // 纯环境变量模式（向后兼容）
- * const registry = createProviderRegistry(env, [stripeFactory, alipayFactory]);
+ * const registry = createProviderRegistry(env, [alipayFactory, easyPayFactory, stripeFactory]);
  *
  * // 混合模式：DB 配置优先于 env var
  * const registry = createProviderRegistry(env, factories, dbConfigs);
@@ -25,13 +25,13 @@ import { selectPaymentProviderForCurrency } from "./currency.js";
 export interface DbProviderConfig {
   /** 是否启用 */
   enabled: boolean;
-  /** 配置项键值对（如 { ZPAY_PID: "xxx", ZPAY_KEY: "xxx" }） */
+  /** 配置项键值对（如 { EASYPAY_PID: "xxx", EASYPAY_KEY: "xxx" }） */
   config: Record<string, unknown>;
 }
 
 /**
  * 从数据库解密后的支付配置映射。
- * key = provider 名称（如 "zpay", "alipay"），value = 解密后的完整配置
+ * key = provider 名称（如 "easypay", "alipay"），value = 解密后的完整配置
  */
 export type DbProviderConfigMap = Record<string, DbProviderConfig>;
 

@@ -189,6 +189,34 @@
         "default": "./dist/features/payment/currency.js"
       }
     },
+    "./features/payment/providers/alipay": {
+      "types": "./dist/features/payment/providers/alipay.d.ts",
+      "import": {
+        "development": "./features/payment/providers/alipay.ts",
+        "default": "./dist/features/payment/providers/alipay.js"
+      }
+    },
+    "./features/payment/providers/easypay": {
+      "types": "./dist/features/payment/providers/easypay.d.ts",
+      "import": {
+        "development": "./features/payment/providers/easypay.ts",
+        "default": "./dist/features/payment/providers/easypay.js"
+      }
+    },
+    "./features/payment/providers/stripe": {
+      "types": "./dist/features/payment/providers/stripe.d.ts",
+      "import": {
+        "development": "./features/payment/providers/stripe.ts",
+        "default": "./dist/features/payment/providers/stripe.js"
+      }
+    },
+    "./features/payment/providers/trc20": {
+      "types": "./dist/features/payment/providers/trc20.d.ts",
+      "import": {
+        "development": "./features/payment/providers/trc20.ts",
+        "default": "./dist/features/payment/providers/trc20.js"
+      }
+    },
     "./features/email": {
       "types": "./dist/features/email/index.d.ts",
       "import": {

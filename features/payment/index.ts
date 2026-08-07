@@ -4,10 +4,11 @@
  * 统一导出所有支付相关能力。支持两种导入方式：
  *
  * 1. 从根导入（适合小项目）：
- *    import { alipayFactory, stripeFactory } from "@usethink/cf-core/features/payment";
+ *    import { alipayFactory, easyPayFactory, stripeFactory } from "@usethink/cf-core/features/payment";
  *
  * 2. 按子路径导入（推荐，tree-shakeable）：
  *    import { alipayFactory } from "@usethink/cf-core/features/payment/providers/alipay";
+ *    import { easyPayFactory } from "@usethink/cf-core/features/payment/providers/easypay";
  *    import { stripeFactory } from "@usethink/cf-core/features/payment/providers/stripe";
  */
 
@@ -45,6 +46,24 @@ export type { DbProviderConfig, DbProviderConfigMap } from "./registry.js";
 // ── 支付宝 ──
 export { AlipayProvider, alipayFactory, signRSA2, verifyRSA2 } from "./providers/alipay.js";
 export type { AlipayConfig } from "./providers/alipay.js";
+
+// ── 易支付兼容（ZPay 等网关） ──
+export {
+  EasyPayProvider,
+  EasyPayProviderError,
+  easyPayFactory,
+  buildEasyPayPaymentApiUrl,
+  buildEasyPayQueryApiUrl,
+  buildEasyPaySubmitUrl,
+  buildSignString,
+  easyPayPayTypeLabel,
+  isAmbiguousEasyPayProviderError,
+  normalizeEasyPayApiBaseUrl,
+  normalizeEasyPayEnabledPayTypes,
+  normalizeEasyPayPayType,
+  verifyEasyPaySign,
+} from "./providers/easypay.js";
+export type { EasyPayConfig, EasyPayPayType, EasyPayProviderErrorKind } from "./providers/easypay.js";
 
 // ── Stripe ──
 export { StripeProvider, stripeFactory } from "./providers/stripe.js";

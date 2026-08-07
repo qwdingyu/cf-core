@@ -58,6 +58,11 @@
 | `ALIPAY_APP_ID` | [支付宝开放平台](https://open.alipay.com) | 支付宝当面付 | `AlipayProvider` |
 | `ALIPAY_PRIVATE_KEY` | 支付宝开放平台 | 支付宝 RSA2 签名 | `AlipayProvider` |
 | `ALIPAY_PUBLIC_KEY` | 支付宝开放平台 | 支付宝回调验签 | `AlipayProvider` |
+| `EASYPAY_PID` | 易支付兼容网关后台（如 ZPay） | 商户 PID | `EasyPayProvider` |
+| `EASYPAY_KEY` | 易支付兼容网关后台（如 ZPay） | 商户密钥 / MD5 签名 | `EasyPayProvider` |
+| `EASYPAY_API_BASE` | 易支付兼容网关后台（如 ZPay） | 接口根地址 | `EasyPayProvider` |
+| `EASYPAY_PAY_TYPE` | 手动配置 | 默认收款方式：`alipay` / `wxpay` / `qqpay` | `EasyPayProvider` |
+| `EASYPAY_ENABLED_PAY_TYPES` | 手动配置 | 启用的收款方式，逗号分隔 | `EasyPayProvider` |
 
 ---
 

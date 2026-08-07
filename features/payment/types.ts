@@ -95,7 +95,7 @@ export interface ProviderFactory {
    * 从数据库解密后的配置创建 Provider。
    * 可选方法——未实现时，注册表会将 config 合入 env 再调用 create()。
    *
-   * @param config - 解密后的扁平配置对象（键名与 env var 一致，如 { ZPAY_PID: "xxx" }）
+   * @param config - 解密后的扁平配置对象（键名与 env var 一致，如 { EASYPAY_PID: "xxx" }）
    */
   fromDbConfig?(config: Record<string, unknown>): PaymentProvider;
 }
