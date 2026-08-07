@@ -37,6 +37,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { sendViaCloudflareEmail, type CloudflareEmailBinding } from "./cloudflare.js";
+import { sendViaRemote, type EmailRemoteOptions } from "./remote.js";
 
 export function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) =>
@@ -134,6 +135,7 @@ export class EmailService {
   private config: ResendConfig | null;
   private configProvider?: EmailConfigProvider;
   private emailBinding?: CloudflareEmailBinding;
+  private remote?: EmailRemoteOptions;
   private logger?: EmailLogger;
   private timeoutMs: number;
   private maxRetries: number;
@@ -141,7 +143,7 @@ export class EmailService {
 
   constructor(opts:
     | ResendConfig
-    | { apiKey?: string; from?: string; defaultFrom?: string; configProvider?: EmailConfigProvider; onLog?: EmailLogger; timeoutMs?: number; maxRetries?: number; emailBinding?: CloudflareEmailBinding },
+    | { apiKey?: string; from?: string; defaultFrom?: string; configProvider?: EmailConfigProvider; onLog?: EmailLogger; timeoutMs?: number; maxRetries?: number; emailBinding?: CloudflareEmailBinding; remote?: EmailRemoteOptions },
   ) {
     // 兼容旧接口：直接传 ResendConfig 对象
     if ("apiKey" in opts && opts.apiKey) {
@@ -149,9 +151,10 @@ export class EmailService {
     } else {
       this.config = null;
     }
-    const o = opts as { configProvider?: EmailConfigProvider; onLog?: EmailLogger; timeoutMs?: number; maxRetries?: number; defaultFrom?: string; emailBinding?: CloudflareEmailBinding };
+    const o = opts as { configProvider?: EmailConfigProvider; onLog?: EmailLogger; timeoutMs?: number; maxRetries?: number; defaultFrom?: string; emailBinding?: CloudflareEmailBinding; remote?: EmailRemoteOptions };
     this.configProvider = o.configProvider;
     this.emailBinding = o.emailBinding;
+    this.remote = o.remote;
     this.logger = o.onLog;
     this.timeoutMs = o.timeoutMs ?? 8000;
     this.maxRetries = o.maxRetries ?? 3;
@@ -163,15 +166,20 @@ export class EmailService {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * 发送邮件。优先级：Cloudflare Email binding（env.EMAIL）→ configProvider（多通道）→ 单 Resend。
-   * Cloudflare Email Service（env.EMAIL.send）是 Workers 原生方案，零第三方依赖，优先使用。
+   * 发送邮件。优先级：remote（cf-auth 网关）→ Cloudflare Email binding → configProvider → 单 Resend。
+   * cf-auth 邮件网关（docs/093）是全项目邮件集中通道，消费方零配置，优先使用。
    */
   async send(opts: SendEmailOptions): Promise<SendResult> {
     const { to, subject, html } = opts;
     const from = opts.from || this.defaultFrom;
     if (!to || !to.includes("@")) return { ok: false, error: "无效收件人" };
 
-    // Cloudflare Email Service 优先（Workers 原生 binding，零第三方依赖）
+    // cf-auth 邮件网关（docs/093）：消费方通过 OAuth client 调用，集中发送
+    if (this.remote) {
+      return sendViaRemote(this.remote, { from, to, subject, html });
+    }
+
+    // Cloudflare Email Service（Workers 原生 binding，零第三方依赖）
     if (this.emailBinding) {
       return sendViaCloudflareEmail(this.emailBinding, { from, to, subject, html });
     }

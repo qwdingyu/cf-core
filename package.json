@@ -210,6 +210,13 @@
         "default": "./dist/features/email/cloudflare.js"
       }
     },
+    "./features/email/remote": {
+      "types": "./dist/features/email/remote.d.ts",
+      "import": {
+        "development": "./features/email/remote.ts",
+        "default": "./dist/features/email/remote.js"
+      }
+    },
     "./platform": {
       "types": "./dist/src/platform.d.ts",
       "import": {
